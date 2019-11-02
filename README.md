@@ -12,7 +12,7 @@ Linux:
 - OpenGL (to run with CPU only)
 
 ### Run Carla server
-Extract the file and run `./CarlaUE4.sh` at the Carla's root directory with a display card
+Extract the file and run `./CarlaUE4.sh` at the Carla's root directory with a display card.\
 Run `./CarlaUE4.sh -opengl` with CPU only
 
 ### Run Carla client
@@ -24,4 +24,4 @@ Only two levels can be selected: `Low` and `Epic` (default)
 `./CarlaUE4.sh -quality-level=Low`
 
 ### Troubleshooting
-If the window crashs, try to run with `./CarlaUE4.sh -opengl`. If it can be executed successfully, then it would be the problem related toe display card driver.
+If the window crashs, try to run with `./CarlaUE4.sh -opengl`. If it can be executed successfully, then it would be the problem related too display card driver.
