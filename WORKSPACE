@@ -4,9 +4,9 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file"
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
-  name = "com_github_bark_simulator_bark",
+  name = "com_github_bark-simulator_bark",
   remote = "https://github.com/tin1254/bark",
-  commit = "1935bc050ba1647dd64557198c0c528ec2fccda9",
+  commit = "2c8063ee044876122bc0b754470096d06f8b2078",
 )
 
 git_repository(
@@ -23,7 +23,7 @@ http_archive(
     name = "gtest",
     url = "https://github.com/google/googletest/archive/release-1.7.0.zip",
     sha256 = "b58cb7547a28b2c718d1e38aee18a3659c9e3ff52440297e965f5edffe34b6d0",
-    build_file = "@com_github_bark_simulator_bark//tools:gtest.BUILD",
+    build_file = "@com_github_bark-simulator_bark//tools:gtest.BUILD",
     strip_prefix = "googletest-release-1.7.0",
 )
 
@@ -39,13 +39,13 @@ http_archive(
     name = "pybind11",
     strip_prefix = "pybind11-2.3.0",
     urls = ["https://github.com/pybind/pybind11/archive/v2.3.0.zip"],
-    build_file = "@com_github_bark_simulator_bark//tools/pybind11:pybind.BUILD",
+    build_file = "@com_github_bark-simulator_bark//tools/pybind11:pybind.BUILD",
 )
 
 # External dependency: Eigen; has no Bazel build.
 http_archive(
     name = "com_github_eigen_eigen",
-    build_file = "@com_github_bark_simulator_bark//tools/eigen:eigen.BUILD",
+    build_file = "@com_github_bark-simulator_bark//tools/eigen:eigen.BUILD",
     sha256 = "dd254beb0bafc695d0f62ae1a222ff85b52dbaa3a16f76e781dce22d0d20a4a6",
     strip_prefix = "eigen-eigen-5a0156e40feb",
     urls = [
@@ -95,7 +95,10 @@ http_archive(
   build_file_content = """
 filegroup(
     name="carla_python_lib",
-    srcs= ["PythonAPI/carla/dist/carla-0.9.6-py3.5-linux-x86_64.egg"],
+    srcs= select({
+        "@bazel_tools//src/conditions:linux_x86_64": glob(["PythonAPI/carla/dist/carla-*-py3.5-linux-x86_64.egg"]),
+        "@bazel_tools//src/conditions:windows": glob(["PythonAPI/carla/dist/carla-*-py3.5-win-amd64.egg"])
+    }),
     visibility = ["//visibility:public"],
 )
 filegroup(
