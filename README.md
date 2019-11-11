@@ -11,7 +11,7 @@ Linux:
 
 ### Run examples
 
-Run `bazel run //examples:test` at root directory.\
+Run `bazel run //examples:fill_world_with_npc` at root directory.\
 It will download Carla at the first time, it will be slow as the size of Carla is quite large.
 
 # Run Carla out of bazel
