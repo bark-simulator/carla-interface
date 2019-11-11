@@ -7,12 +7,11 @@ try:
   sys.path.append(glob.glob("external/carla/PythonAPI/carla/dist/carla-*.egg")[0])
 except IndexError:
   pass
-
 import carla
 
 
 class CarlaClient():
-  """docstring for CarlaParser"""
+  """Class for connecting server and managing carla's world"""
 
   def __init__(self, map='Town02'):
     self.client = None
@@ -20,16 +19,16 @@ class CarlaClient():
     self.bp_lib = None
     self.map = map
     # TODO: set/dict/list?
-    self.vehicles = dict()
+    self.actors = dict()
 
   def __del__(self):
-    try:
-      self.set_synchronous_mode(False)
-    except Exception as e:
-      pass
-
-    if self.client != None:
-      self.client.apply_batch([carla.command.DestroyActor(_) for _ in self.vehicles])
+    # try:
+    #   self.set_synchronous_mode(False)
+    # except Exception as e:
+    #   pass
+    if self.actors:
+      for id, actor in self.actors.items():
+        actor.destroy()
 
   def connect(self, host='localhost', port=2000, timeout=2):
     self.client = carla.Client(host, port)
@@ -44,6 +43,9 @@ class CarlaClient():
         synchronous_mode=mode,
         fixed_delta_seconds=delta_seconds))
 
+  def get_world(self):
+    return self.world
+
   def get_blueprint_library(self):
     return self.bp_lib
 
@@ -53,28 +55,50 @@ class CarlaClient():
   def spawn_actor(self, blueprint, transform):
     try:
       actor = self.world.spawn_actor(blueprint, transform)
-      self.vehicles[actor.id] = actor
-      return actor.id
+      self.actors[actor.id] = actor
+      return actor.id, actor
     except Exception as e:
       print(e)
-      return None
+      return None, None
 
-  def spawn_sensor(self):
-    pass
+  def spawn_sensor(self, attach_to_id: int, sensor_type='sensor.camera.rgb', relative_location=(1.5, 0.0, 2.4)):
+    try:
+      sensor_bp = self.bp_lib.find(sensor_type)
+      sensor_transform = carla.Transform(carla.Location(*relative_location))
+      sensor = self.world.spawn_actor(sensor_bp, sensor_transform, attach_to=self.actors[attach_to_id])
+      self.actors[sensor.id] = sensor
+      return sensor.id, sensor
+    except Exception as e:
+      print(e)
+      return None, None
 
-  def get_vehicles(self):
-    return self.vehicles.keys()
+  def get_actors_id(self):
+    return self.actors.keys()
 
   def set_autopilot(self, id, mode):
-    self.vehicles[id].set_autopilot(mode)
+    self.actors[id].set_autopilot(mode)
+
+  """
+  
+      [TIME_POSITION, X_POSITION, Y_POSITION, THETA_POSITION, VEL_POSITION, ...]
+
+      Notes:
+      The y-axis location and orientation angle returned from Carla need to be 
+      mirror in order to display the vehicles correctly on the map
+      -t.rotation.yaw & -t.location.y
+
+      TODO:
+      Look for potential bug in Carla/BARK's source code
+  
+  """
 
   def get_vehicle_state(self, id):
     # Should be called in synchronous mode
 
-    if id in self.vehicles:
+    if id in self.actors:
       snapshot = self.world.get_snapshot()
       # vehicle = snapshot.find(id)
-      vehicle = self.vehicles[id]
+      vehicle = self.actors[id]
 
       t = vehicle.get_transform()
       v = vehicle.get_velocity()
@@ -82,7 +106,6 @@ class CarlaClient():
       # a = vehicle.get_acceleration()
       # av = vehicle.get_angular_velocity()
 
-      # [TIME_POSITION, X_POSITION, Y_POSITION, THETA_POSITION, VEL_POSITION, ...]
       return np.array([snapshot.timestamp.elapsed_seconds, t.location.x, -t.location.y,
                        math.radians(-t.rotation.yaw),
                        math.sqrt(v.x**2 + v.y**2 + v.z**2)])
@@ -90,23 +113,23 @@ class CarlaClient():
       print("Actor {} not found".format(id))
       return None
 
-  def get_all_vehicles_state(self, id_convertion):
+  def get_vehicles_state(self, id_convertion):
     # id_convertion: convert carla actor id to bark agent id
     # Should be called in synchronous mode
 
     actor_state_map = dict()
     snapshot = self.world.get_snapshot()
-    for id, vehicle in self.vehicles.items():
+    for id, vehicle in self.actors.items():
+      if vehicle.type_id.split(".")[0] == "vehicle":
+        t = vehicle.get_transform()
+        v = vehicle.get_velocity()
+        # c = vehicle.get_control()
+        # a = vehicle.get_acceleration()
+        # av = vehicle.get_angular_velocity()
 
-      t = vehicle.get_transform()
-      v = vehicle.get_velocity()
-      # c = vehicle.get_control()
-      # a = vehicle.get_acceleration()
-      # av = vehicle.get_angular_velocity()
-
-      actor_state_map[id_convertion[id]] = np.array([snapshot.timestamp.elapsed_seconds, t.location.x, -t.location.y,
-                                                     math.radians(-t.rotation.yaw),
-                                                     math.sqrt(v.x**2 + v.y**2 + v.z**2)], dtype=np.float32)
+        actor_state_map[id_convertion[id]] = np.array([snapshot.timestamp.elapsed_seconds, t.location.x, -t.location.y,
+                                                       math.radians(-t.rotation.yaw),
+                                                       math.sqrt(v.x**2 + v.y**2 + v.z**2)], dtype=np.float32)
 
     return actor_state_map
 

@@ -1,4 +1,3 @@
-# from modules.runtime.commons.xodr_parser import XodrParser
 from client.carla_client import CarlaClient
 
 from bark.world.agent import *
@@ -23,10 +22,8 @@ import time
 import numpy as np
 import random
 
-# print(glob.glob("external/*"))
 
 BARK_PATH = "external/com_github_bark-simulator_bark/"
-
 CARLA_MAP = "Town02"
 
 param_server = ParameterServer(filename=BARK_PATH+"examples/params/od8_const_vel_one_agent.json")
@@ -55,18 +52,18 @@ goal_polygon = goal_polygon.translate(Point2d(-191.789, -50.1725))
 sim_step_time = param_server["simulation"]["step_time",
                                            "Step-time in simulation",
                                            0.05]
-sim_real_time_factor = param_server["simulation"]["real_time_factor",
-                                                  "execution in real-time or faster",
-                                                  100]
+# sim_real_time_factor = param_server["simulation"]["real_time_factor",
+#                                                   "execution in real-time or faster",
+#                                                   100]
 
 # Open Carla simulation server
-try:
-  server = subprocess.Popen("external/carla/CarlaUE4.sh")
-  time.sleep(8)  # Wait for carla
+with subprocess.Popen("external/carla/CarlaUE4.sh") as server:
+  time.sleep(10)  # Wait for carla
 
   # Connect to Carla server
   client = CarlaClient(CARLA_MAP)
   client.connect()
+  # TODO: synchronous mode
   # client.set_synchronous_mode(True, sim_step_time)
 
   blueprint_library = client.get_blueprint_library()
@@ -78,12 +75,12 @@ try:
     # create agent (actor) in Carla
     bp = random.choice(blueprint_library.filter('vehicle'))
     transform = random.choice(client.get_spawn_points())
-    carla_agent_id = client.spawn_actor(bp, transform)
+    agent_carla_id, _ = client.spawn_actor(bp, transform)
 
-    if carla_agent_id == None:
+    if agent_carla_id == None:
       continue
 
-    client.set_autopilot(carla_agent_id, True)
+    client.set_autopilot(agent_carla_id, True)
 
     # create agent object in BARK
     agent_params = param_server.addChild("agent{}".format(i))
@@ -97,25 +94,23 @@ try:
                   map_interface)
     bark_world.add_agent(agent)
 
-    carla_to_bark_id[carla_agent_id] = agent.id
+    carla_to_bark_id[agent_carla_id] = agent.id
 
-  # viewer
+  # bark viewer
   viewer = PygameViewer(params=param_server,
                         x_range=[-300, 300],
                         y_range=[-300, 300],
                         screen_dims=[1000, 1000])
 
+  # TODO: error if not calling this first
   bark_world.step(sim_step_time)
 
+  # main loop
   for _ in range(0, 100):
+    # TODO: synchronous mode
     viewer.clear()
     # world.step(sim_step_time)
-    agent_state_map = client.get_all_vehicles_state(carla_to_bark_id)
+    agent_state_map = client.get_vehicles_state(carla_to_bark_id)
     bark_world.fill_world_from_carla(sim_step_time, agent_state_map)
     viewer.drawWorld(bark_world)
-    viewer.show(block=False)
-    # time.sleep(sim_step_time/sim_real_time_factor)
-
-except Exception as e:
-  print(e)
-  server.kill()
+    viewer.show(block=True)
