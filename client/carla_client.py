@@ -22,13 +22,10 @@ class CarlaClient():
     self.actors = dict()
 
   def __del__(self):
-    # try:
-    #   self.set_synchronous_mode(False)
-    # except Exception as e:
-    #   pass
     if self.actors:
       for id, actor in self.actors.items():
         actor.destroy()
+    self.set_synchronous_mode(False)
 
   def connect(self, host='localhost', port=2000, timeout=2):
     self.client = carla.Client(host, port)
@@ -42,6 +39,9 @@ class CarlaClient():
     self.world.apply_settings(carla.WorldSettings(
         synchronous_mode=mode,
         fixed_delta_seconds=delta_seconds))
+
+  def tick(self):
+    self.world.tick()
 
   def get_world(self):
     return self.world
@@ -121,6 +121,3 @@ class CarlaClient():
         actor_state_map[id_convertion[id]] = self.get_vehicle_state(id)
 
     return actor_state_map
-
-  def tick(self):
-    pass

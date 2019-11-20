@@ -26,6 +26,9 @@ import random
 BARK_PATH = "external/com_github_bark-simulator_bark/"
 CARLA_MAP = "Town02"
 CARLA_PORT = 2000
+DELTA_SECOND = 0.1
+SYNCHRONOUS_MODE = True
+
 
 param_server = ParameterServer(filename=BARK_PATH+"examples/params/od8_const_vel_one_agent.json")
 
@@ -63,15 +66,14 @@ try:
   # Connect to Carla server
   client = CarlaClient(CARLA_MAP)
   client.connect(port=CARLA_PORT)
-  # TODO: synchronous mode
-  # client.set_synchronous_mode(True, sim_step_time)
+  client.set_synchronous_mode(SYNCHRONOUS_MODE, DELTA_SECOND)
 
   blueprint_library = client.get_blueprint_library()
 
   # use for converting carla actor id to bark agent id
   carla_to_bark_id = dict()
 
-  for i in range(50):
+  for i in range(40):
     # create agent (actor) in Carla
     bp = random.choice(blueprint_library.filter('vehicle'))
     transform = random.choice(client.get_spawn_points())
@@ -103,19 +105,21 @@ try:
                         y_range=[-100, 100],
                         screen_dims=[1000, 1000])
 
-  print("START")
-
   # main loop
-  for _ in range(0, 100):
-    # TODO: synchronous mode
+  print("START")
+  while True:
+    if SYNCHRONOUS_MODE:
+      client.tick()
     viewer.clear()
-    # world.step(sim_step_time)
+
     agent_state_map = client.get_vehicles_state(carla_to_bark_id)
-    bark_world.fill_world_from_carla(sim_step_time, agent_state_map)
+    # TODO: use time different in carla if synchronous mode if off
+    bark_world.fill_world_from_carla(DELTA_SECOND, agent_state_map) 
     viewer.drawWorld(bark_world, eval_agent_ids=[agent.id])
     viewer.show(block=False)
+
 except (KeyboardInterrupt, SystemExit):
   raise
 finally:
-  # kill the process if it is not killed
+  # kill the child of subprocess if it is not killed
   os.system("fuser {}/tcp -k".format(CARLA_PORT))
