@@ -25,6 +25,7 @@ import random
 
 BARK_PATH = "external/com_github_bark-simulator_bark/"
 CARLA_MAP = "Town02"
+CARLA_PORT = 2000
 
 param_server = ParameterServer(filename=BARK_PATH+"examples/params/od8_const_vel_one_agent.json")
 
@@ -44,9 +45,7 @@ bark_world.set_map(map_interface)
 # Agent Definition
 agent_2d_shape = CarLimousine()
 
-init_state = np.zeros(5)
-goal_polygon = Polygon2d([0, 0, 0], [Point2d(-1, -1), Point2d(-1, 1), Point2d(1, 1), Point2d(1, -1)])
-goal_polygon = goal_polygon.translate(Point2d(-191.789, -50.1725))
+init_state = np.empty(5)
 
 # World Simulation
 sim_step_time = param_server["simulation"]["step_time",
@@ -57,12 +56,13 @@ sim_step_time = param_server["simulation"]["step_time",
 #                                                   100]
 
 # Open Carla simulation server
-with subprocess.Popen("external/carla/CarlaUE4.sh") as server:
-  time.sleep(10)  # Wait for carla
+try:
+  server = subprocess.Popen("external/carla/CarlaUE4.sh")
+  time.sleep(7)  # Wait for carla
 
   # Connect to Carla server
   client = CarlaClient(CARLA_MAP)
-  client.connect()
+  client.connect(port=CARLA_PORT)
   # TODO: synchronous mode
   # client.set_synchronous_mode(True, sim_step_time)
 
@@ -71,7 +71,7 @@ with subprocess.Popen("external/carla/CarlaUE4.sh") as server:
   # use for converting carla actor id to bark agent id
   carla_to_bark_id = dict()
 
-  for i in range(10):
+  for i in range(50):
     # create agent (actor) in Carla
     bp = random.choice(blueprint_library.filter('vehicle'))
     transform = random.choice(client.get_spawn_points())
@@ -90,7 +90,7 @@ with subprocess.Popen("external/carla/CarlaUE4.sh") as server:
                   execution_model,
                   agent_2d_shape,
                   agent_params,
-                  GoalDefinitionPolygon(goal_polygon),  # goal_lane_id
+                  None,  # goal_lane_id
                   map_interface)
     bark_world.add_agent(agent)
 
@@ -98,12 +98,12 @@ with subprocess.Popen("external/carla/CarlaUE4.sh") as server:
 
   # bark viewer
   viewer = PygameViewer(params=param_server,
-                        x_range=[-300, 300],
-                        y_range=[-300, 300],
+                        follow_agent_id=agent.id,
+                        x_range=[-100, 100],
+                        y_range=[-100, 100],
                         screen_dims=[1000, 1000])
 
-  # TODO: error if not calling this first
-  bark_world.step(sim_step_time)
+  print("START")
 
   # main loop
   for _ in range(0, 100):
@@ -112,5 +112,10 @@ with subprocess.Popen("external/carla/CarlaUE4.sh") as server:
     # world.step(sim_step_time)
     agent_state_map = client.get_vehicles_state(carla_to_bark_id)
     bark_world.fill_world_from_carla(sim_step_time, agent_state_map)
-    viewer.drawWorld(bark_world)
-    viewer.show(block=True)
+    viewer.drawWorld(bark_world, eval_agent_ids=[agent.id])
+    viewer.show(block=False)
+except (KeyboardInterrupt, SystemExit):
+  raise
+finally:
+  # kill the process if it is not killed
+  os.system("fuser {}/tcp -k".format(CARLA_PORT))

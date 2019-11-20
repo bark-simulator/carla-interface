@@ -93,8 +93,6 @@ class CarlaClient():
   """
 
   def get_vehicle_state(self, id):
-    # Should be called in synchronous mode
-
     if id in self.actors:
       snapshot = self.world.get_snapshot()
       # vehicle = snapshot.find(id)
@@ -116,20 +114,11 @@ class CarlaClient():
   def get_vehicles_state(self, id_convertion):
     # id_convertion: convert carla actor id to bark agent id
     # Should be called in synchronous mode
-
     actor_state_map = dict()
     snapshot = self.world.get_snapshot()
     for id, vehicle in self.actors.items():
       if vehicle.type_id.split(".")[0] == "vehicle":
-        t = vehicle.get_transform()
-        v = vehicle.get_velocity()
-        # c = vehicle.get_control()
-        # a = vehicle.get_acceleration()
-        # av = vehicle.get_angular_velocity()
-
-        actor_state_map[id_convertion[id]] = np.array([snapshot.timestamp.elapsed_seconds, t.location.x, -t.location.y,
-                                                       math.radians(-t.rotation.yaw),
-                                                       math.sqrt(v.x**2 + v.y**2 + v.z**2)], dtype=np.float32)
+        actor_state_map[id_convertion[id]] = self.get_vehicle_state(id)
 
     return actor_state_map
 
