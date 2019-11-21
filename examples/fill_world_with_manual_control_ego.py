@@ -25,7 +25,7 @@ import numpy as np
 import random
 import pygame
 
-BARK_PATH = "external/com_github_bark-simulator_bark/"
+BARK_PATH = "external/com_github_bark_simulator_bark/"
 CARLA_MAP = "Town02"
 
 param_server = ParameterServer(filename=BARK_PATH+"examples/params/od8_const_vel_one_agent.json")

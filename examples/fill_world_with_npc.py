@@ -23,7 +23,8 @@ import numpy as np
 import random
 
 
-BARK_PATH = "external/com_github_bark-simulator_bark/"
+BARK_PATH = "external/com_github_bark_simulator_bark/"
+BARK_MAP = "Town02"
 CARLA_MAP = "Town02"
 CARLA_PORT = 2000
 DELTA_SECOND = 0.1
@@ -41,14 +42,12 @@ execution_model = ExecutionModelInterpolate(param_server)
 dynamic_model = SingleTrackModel(param_server)
 
 # Map Definition
-xodr_parser = XodrParser(BARK_PATH+"modules/runtime/tests/data/"+CARLA_MAP+".xodr")
+xodr_parser = XodrParser(BARK_PATH+"modules/runtime/tests/data/"+BARK_MAP+".xodr")
 map_interface = MapInterface()
 map_interface.set_open_drive_map(xodr_parser.map)
 bark_world.set_map(map_interface)
 # Agent Definition
 agent_2d_shape = CarLimousine()
-
-init_state = np.empty(5)
 
 # World Simulation
 sim_step_time = param_server["simulation"]["step_time",
@@ -74,7 +73,7 @@ try:
   carla_to_bark_id = dict()
 
   for i in range(40):
-    # create agent (actor) in Carla
+    # spawn agent (actor) in Carla
     bp = random.choice(blueprint_library.filter('vehicle'))
     transform = random.choice(client.get_spawn_points())
     agent_carla_id, _ = client.spawn_actor(bp, transform)
@@ -84,9 +83,9 @@ try:
 
     client.set_autopilot(agent_carla_id, True)
 
-    # create agent object in BARK
+    # spawn agent object in BARK
     agent_params = param_server.addChild("agent{}".format(i))
-    agent = Agent(init_state,
+    agent = Agent(np.empty(5),
                   behavior_model,
                   dynamic_model,
                   execution_model,
@@ -113,13 +112,13 @@ try:
     viewer.clear()
 
     agent_state_map = client.get_vehicles_state(carla_to_bark_id)
-    # TODO: use time different in carla if synchronous mode if off
-    bark_world.fill_world_from_carla(DELTA_SECOND, agent_state_map) 
+    # TODO: use time different in carla if synchronous mode is off
+    bark_world.fill_world_from_carla(DELTA_SECOND, agent_state_map)
     viewer.drawWorld(bark_world, eval_agent_ids=[agent.id])
     viewer.show(block=False)
 
 except (KeyboardInterrupt, SystemExit):
   raise
 finally:
-  # kill the child of subprocess if it is not killed
+  # kill the child of subprocess if it is not yet killed
   os.system("fuser {}/tcp -k".format(CARLA_PORT))

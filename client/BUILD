@@ -5,7 +5,13 @@ py_library(
 )
 
 py_library(
-    name = "manual_control",
-    srcs = ["manual_control.py"],
+    name = "keyboard_control",
+    srcs = ["keyboard_control.py"],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "sensor",
+    srcs = ["sensor.py"],
     visibility = ["//visibility:public"],
 )
