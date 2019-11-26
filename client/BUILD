@@ -15,3 +15,9 @@ py_library(
     srcs = ["sensor.py"],
     visibility = ["//visibility:public"],
 )
+
+py_library(
+    name = "raw_control",
+    srcs = ["raw_control.py"],
+    visibility = ["//visibility:public"],
+)
