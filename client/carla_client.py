@@ -41,7 +41,7 @@ class CarlaClient():
         fixed_delta_seconds=delta_seconds))
 
   def tick(self):
-    self.world.tick()
+    return self.world.tick()
 
   def get_world(self):
     return self.world
@@ -61,10 +61,10 @@ class CarlaClient():
       print(e)
       return None, None
 
-  def spawn_sensor(self, attach_to_id: int, sensor_type='sensor.camera.rgb', relative_location=(1.5, 0.0, 2.4)):
+  def spawn_sensor(self, attach_to_id: int, sensor_type, location, rotation):
     try:
       sensor_bp = self.bp_lib.find(sensor_type)
-      sensor_transform = carla.Transform(carla.Location(*relative_location))
+      sensor_transform = carla.Transform(carla.Location(*location),carla.Rotation(*rotation))
       sensor = self.world.spawn_actor(sensor_bp, sensor_transform, attach_to=self.actors[attach_to_id])
       self.actors[sensor.id] = sensor
       return sensor.id, sensor

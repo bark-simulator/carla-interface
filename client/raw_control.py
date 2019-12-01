@@ -22,10 +22,10 @@ class RawControl:
     # vehicle.applycontrol(self.control)
     transform = carla.Transform(carla.Location(x=float(location[0]), y=-float(location[1])),
                                 carla.Rotation(yaw=math.degrees(-steer_dir)))
+
     v = np.append(location, 0)-np.append(last_location, 0)
     v = v / (np.linalg.norm(v) + 1e-16)*velocity
     velocity_vec = carla.Vector3D(x=v[0], y=-v[1], z=v[2])
-    # print(transform)
 
     vehicle.set_transform(transform)
     # vehicle.set_velocity(velocity_vec)

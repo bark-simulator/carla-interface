@@ -21,3 +21,9 @@ py_library(
     srcs = ["raw_control.py"],
     visibility = ["//visibility:public"],
 )
+
+py_library(
+    name = "viewer",
+    srcs = ["viewer.py"],
+    visibility = ["//visibility:public"],
+)

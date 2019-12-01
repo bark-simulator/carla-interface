@@ -1,5 +1,8 @@
 import queue
 import numpy as np
+import sys
+import glob
+import pygame
 
 try:
   sys.path.append(glob.glob("external/carla/PythonAPI/carla/dist/carla-*.egg")[0])
@@ -8,7 +11,7 @@ except IndexError:
 import carla
 from carla import ColorConverter as cc
 
-class SensorsData:
+class SensorData:
   def __init__(self):
     # displaying camera's image
     self.cam_surface = None

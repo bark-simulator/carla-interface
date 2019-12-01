@@ -1,6 +1,6 @@
 from client.carla_client import CarlaClient
 from client.manual_control import KeyboardControl
-from client.manual_control import SensorsData
+from client.manual_control import SensorData
 
 from bark.world.agent import *
 from bark.models.behavior import *
@@ -79,7 +79,7 @@ with subprocess.Popen("external/carla/CarlaUE4.sh") as server:
     ego_carla_id, ego = client.spawn_actor(ego_bp, ego_transform)
 
     if ego_carla_id != None:
-      cam_carla_id, cam = client.spawn_sensor(ego_carla_id)
+      cam_carla_id, cam = client.spawn_sensor(ego_carla_id, 'sensor.camera.rgb', location=(1.5, 0.0, 2.4))
       break
 
   # create agent object in BARK
@@ -104,16 +104,12 @@ with subprocess.Popen("external/carla/CarlaUE4.sh") as server:
   viewer = MPViewer(params=param_server)
 
   pygame.init()
-  display = pygame.display.set_mode((800, 600),
-                                    pygame.HWSURFACE | pygame.DOUBLEBUF)
+  display = pygame.display.set_mode((800, 600), pygame.DOUBLEBUF)
   clock = pygame.time.Clock()
 
-  sensors = SensorsData()
+  sensors = SensorData()
   cam.listen(lambda image: sensors.RGBcamToImage(image))
   controller = KeyboardControl(client.get_world())
-
-  # TODO: error if not calling this first
-  bark_world.step(sim_step_time)
 
   while True:
     frame_start = time.time()
