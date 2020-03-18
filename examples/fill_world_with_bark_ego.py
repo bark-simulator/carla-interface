@@ -1,6 +1,6 @@
 from client.carla_client import CarlaClient
 from client.raw_control import RawControl
-from client.sensor import SensorData
+from client.sensors import CameraManager
 from client.viewer import Viewer
 
 from bark.world.agent import *
@@ -44,11 +44,12 @@ SYNCHRONOUS_MODE = True
 BARK_SIM_FACTOR = 10
 BARK_SCREEN_DIMS = (600, 600)
 EGO_CAMERA_SIZE = (800, 600)
+CARLA_LOW_QUALITY = True
 
 
-# CARLA_DELTA = DELTA_SECOND
-CARLA_DELTA = DELTA_SECOND/NUM_BARK_TRAJECTORY_STEP
-assert(1/10 >= CARLA_DELTA >= 1/60)
+CARLA_DELTA = DELTA_SECOND
+# CARLA_DELTA = DELTA_SECOND/NUM_BARK_TRAJECTORY_STEP
+# assert(1/10 >= CARLA_DELTA >= 1/60)
 
 
 param_server = ParameterServer(filename=BARK_PATH+"examples/params/od8_const_vel_one_agent.json")
@@ -68,17 +69,18 @@ map_interface.set_open_drive_map(xodr_parser.map)
 bark_world.set_map(map_interface)
 # Agent Definition
 agent_2d_shape = CarLimousine()
-init_state = np.array([0, -2, -304, 3.14*-1, 20/3.6])
+init_state = np.array([0, -2, -304, 3.14*-0.5, 20/3.6]) # [0, -2, -300, 3.14*-1, 20/3.6]
 goal_polygon = Polygon2d([0, 0, 0], [Point2d(-1, -1), Point2d(-1, 1), Point2d(1, 1), Point2d(1, -1)])
 goal_polygon = goal_polygon.translate(Point2d(352, -331))
 
 # open Carla simulation server
 try:
-  server = subprocess.Popen("external/carla/CarlaUE4.sh")
+  args = ["external/carla/CarlaUE4.sh", "-quality-level=Low"]
+  server = subprocess.Popen(args[0] if not CARLA_LOW_QUALITY else args)
   # Connect to Carla server
   client = CarlaClient(CARLA_MAP)
-  time.sleep(5)  # Wait for carla
-  client.connect(port=CARLA_PORT)
+  time.sleep(12)  # Wait for carla
+  client.connect(port=CARLA_PORT, timeout=5)
   client.set_synchronous_mode(SYNCHRONOUS_MODE, CARLA_DELTA)
 
   rc = RawControl(client.client)
@@ -91,7 +93,7 @@ try:
   agent_carla_id = None
   while agent_carla_id == None:
     # create agent (actor) in Carla
-    bp = random.choice(blueprint_library.filter('vehicle'))
+    bp = random.choice(blueprint_library.filter('vehicle.dodge_charger.police'))
     transform = carla.Transform(carla.Location(x=float(init_state[1]), y=-float(init_state[2]), z=0.3),
                                 carla.Rotation(yaw=math.degrees(init_state[3])))
     agent_carla_id, agent_carla = client.spawn_actor(bp, transform)
@@ -123,7 +125,7 @@ try:
 
   # 800*600 is the default size of carla's camera
   interface_viewer = Viewer(EGO_CAMERA_SIZE, BARK_SCREEN_DIMS)
-  sensors = SensorData()
+  sensors = CameraManager()
 
   if SYNCHRONOUS_MODE:
     cam.listen(sensors.image_queue.put)
@@ -140,26 +142,26 @@ try:
       bark_world.fill_world_from_carla(0, agent_state_map)
 
     plan = bark_world.plan_agents(DELTA_SECOND, [bark_agent.id])[bark_agent.id]
-    # rc.control(agent_carla, plan[-2][1:3], plan[-1][1:3], plan[-1][4], plan[-1][3])
-    # bark_world.fill_world_from_carla(CARLA_DELTA, agent_state_map)
-    for r in range(1, NUM_BARK_TRAJECTORY_STEP):
-      rc.control(agent_carla, plan[r-1][1:3], plan[r][1:3], plan[r][4], plan[r][3])
+    rc.control(agent_carla, plan[-2][1:3], plan[-1][1:3], plan[-1][4], plan[-1][3])
+    bark_world.fill_world_from_carla(CARLA_DELTA, agent_state_map)
+    # fr r ion range(1, NUM_BARK_TRAJECTORY_STEP):
+    #   rc.control(agent_carla, plan[r-1][1:3], plan[r][1:3], plan[r][4], plan[r][3])
 
-      interface_viewer.tick()
+    interface_viewer.tick()
 
-      if SYNCHRONOUS_MODE:
-        frame_id = client.tick()
-        sensors.RGBcamToImage_sync(frame_id)
+    if SYNCHRONOUS_MODE:
+      frame_id = client.tick()
+      sensors.RGBcamToImage_sync(frame_id)
 
-      if sensors.cam_surface != None:
-        interface_viewer.update(sensors.cam_surface, (0, 0) + EGO_CAMERA_SIZE)
+    if sensors.cam_surface != None:
+      interface_viewer.update(sensors.cam_surface, (0, 0) + EGO_CAMERA_SIZE)
 
-      agent_state_map = client.get_vehicles_state(carla_to_bark_id)
-      bark_world.fill_world_from_carla(CARLA_DELTA, agent_state_map)
+    agent_state_map = client.get_vehicles_state(carla_to_bark_id)
+    bark_world.fill_world_from_carla(CARLA_DELTA, agent_state_map)
 
     # if BARK_SIM_FACTOR == None or i % BARK_SIM_FACTOR == 0:
-      bark_viewer.drawWorld(bark_world, eval_agent_ids=[bark_agent.id], show=False)
-      interface_viewer.update(bark_viewer.screen_surface, (EGO_CAMERA_SIZE[0], 0) + BARK_SCREEN_DIMS)
+    bark_viewer.drawWorld(bark_world, eval_agent_ids=[bark_agent.id], show=False)
+    interface_viewer.update(bark_viewer.screen_surface, (EGO_CAMERA_SIZE[0], 0) + BARK_SCREEN_DIMS)
 
 except (KeyboardInterrupt, SystemExit):
   raise

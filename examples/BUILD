@@ -15,6 +15,8 @@ py_binary(
             "@com_github_bark_simulator_bark//modules/runtime/viewer:pygame_viewer",
             "@com_github_bark_simulator_bark//modules/runtime/viewer:matplotlib_viewer",
             "//client:carla_client",
+            "//client:sensors",
+            "//client:viewer",
           ],
 )
 
@@ -35,6 +37,7 @@ py_binary(
             "@com_github_bark_simulator_bark//modules/runtime/viewer:pygame_viewer",
             "@com_github_bark_simulator_bark//modules/runtime/viewer:matplotlib_viewer",
             "//client:carla_client",
+            "//client:sensors",
             "//client:keyboard_control",
           ],
 )
@@ -58,7 +61,7 @@ py_binary(
             "@com_github_bark_simulator_bark//modules/runtime/viewer:matplotlib_viewer",
             "//client:carla_client",
             "//client:raw_control",
-            "//client:sensor",
+            "//client:sensors",
             "//client:viewer"
           ],
 )

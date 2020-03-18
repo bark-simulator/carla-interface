@@ -11,8 +11,8 @@ py_library(
 )
 
 py_library(
-    name = "sensor",
-    srcs = ["sensor.py"],
+    name = "sensors",
+    srcs = ["sensors.py"],
     visibility = ["//visibility:public"],
 )
 

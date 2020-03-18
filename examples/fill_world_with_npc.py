@@ -1,4 +1,6 @@
 from client.carla_client import CarlaClient
+from client.sensors import CameraManager
+from client.viewer import Viewer
 
 from bark.world.agent import *
 from bark.models.behavior import *
@@ -21,6 +23,7 @@ import glob
 import time
 import numpy as np
 import random
+import pygame as pg
 
 
 BARK_PATH = "external/com_github_bark_simulator_bark/"
@@ -29,6 +32,8 @@ CARLA_MAP = "Town02"
 CARLA_PORT = 2000
 DELTA_SECOND = 0.1
 SYNCHRONOUS_MODE = True
+BARK_SCREEN_DIMS = (600, 600)
+CARLA_LOW_QUALITY = False
 
 
 param_server = ParameterServer(filename=BARK_PATH+"examples/params/od8_const_vel_one_agent.json")
@@ -59,12 +64,13 @@ sim_step_time = param_server["simulation"]["step_time",
 
 # Open Carla simulation server
 try:
-  server = subprocess.Popen("external/carla/CarlaUE4.sh")
-  time.sleep(7)  # Wait for carla
+  args = ["external/carla/CarlaUE4.sh", "-quality-level=Low"]
+  server = subprocess.Popen(args[0] if not CARLA_LOW_QUALITY else args)
+  time.sleep(6)  # Wait for carla
 
   # Connect to Carla server
   client = CarlaClient(CARLA_MAP)
-  client.connect(port=CARLA_PORT)
+  client.connect(port=CARLA_PORT,timeout=10)
   client.set_synchronous_mode(SYNCHRONOUS_MODE, DELTA_SECOND)
 
   blueprint_library = client.get_blueprint_library()
@@ -72,13 +78,19 @@ try:
   # use for converting carla actor id to bark agent id
   carla_to_bark_id = dict()
 
-  for i in range(40):
+  carla_cams=dict()
+
+  for i in range(15):
     # spawn agent (actor) in Carla
     bp = random.choice(blueprint_library.filter('vehicle'))
     transform = random.choice(client.get_spawn_points())
     agent_carla_id, _ = client.spawn_actor(bp, transform)
 
-    if agent_carla_id == None:
+    if agent_carla_id != None:
+      _, cam = client.spawn_sensor(agent_carla_id, "sensor.camera.rgb",
+                                              location=(0, 0, 30), rotation=(270, 0, 0))
+      carla_cams[agent_carla_id]=cam
+    else:
       continue
 
     client.set_autopilot(agent_carla_id, True)
@@ -98,27 +110,44 @@ try:
     carla_to_bark_id[agent_carla_id] = agent.id
 
   # bark viewer
-  viewer = PygameViewer(params=param_server,
+  bark_viewer = PygameViewer(params=param_server,
                         follow_agent_id=agent.id,
                         x_range=[-100, 100],
                         y_range=[-100, 100],
-                        screen_dims=[1000, 1000])
+                        screen_dims=BARK_SCREEN_DIMS)
+  # 800*600 is the default size of carla's camera
+  interface_viewer = Viewer(1, BARK_SCREEN_DIMS)
+  # cam_man = CameraManager(carla_cams,synchronous_mode=True)
+  cam_man = CameraManager({agent_carla_id:cam},synchronous_mode=True)
+
+  # for id,cam in carla_cams.items():
+  #   if SYNCHRONOUS_MODE:
+  #     cam.listen(cam_man.image_queues[id].put)
+  #   else:
+  #     cam.listen(lambda image: cam_man.RGBcamToImage(image=image,cam_id=id))
 
   # main loop
   print("START")
   while True:
+    bark_viewer.clear()
+    interface_viewer.tick()
     if SYNCHRONOUS_MODE:
-      client.tick()
-    viewer.clear()
+      frame_id=client.tick()
+      cam_man.fetchImage(frame_id,agents_id=[agent_carla_id])
+
+    interface_viewer.update_cameras(cam_man.surfaces,agents_id=[agent_carla_id])
 
     agent_state_map = client.get_vehicles_state(carla_to_bark_id)
     # TODO: use time different in carla if synchronous mode is off
     bark_world.fill_world_from_carla(DELTA_SECOND, agent_state_map)
-    viewer.drawWorld(bark_world, eval_agent_ids=[agent.id])
-    viewer.show(block=False)
-
+    bark_viewer.drawWorld(bark_world,eval_agent_ids=[agent.id])
+    interface_viewer.update(bark_viewer.screen, (0, 0), BARK_SCREEN_DIMS)
+    interface_viewer.flip()
+    
 except (KeyboardInterrupt, SystemExit):
   raise
 finally:
   # kill the child of subprocess if it is not yet killed
   os.system("fuser {}/tcp -k".format(CARLA_PORT))
+  pg.display.quit()
+  pg.quit()
