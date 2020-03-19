@@ -2,77 +2,56 @@ from queue import Queue
 import numpy as np
 import sys
 import glob
-import pygame
-# from collections import defaultdict
+import pygame as pg
 
 try:
-  sys.path.append(glob.glob("external/carla/PythonAPI/carla/dist/carla-*.egg")[0])
+    sys.path.append(
+        glob.glob("external/carla/PythonAPI/carla/dist/carla-*.egg")[0])
 except IndexError:
-  pass
+    pass
 import carla
 from carla import ColorConverter as cc
 
+
 class CameraManager:
-  def __init__(self,carla_cameras,synchronous_mode=False):
-    self.synchronous_mode=synchronous_mode
-    self.cameras=carla_cameras
+  def __init__(self, cameras, synchronous_mode=False):
+    self.synchronous_mode = synchronous_mode
+    self.cams = cameras
+    self.camsIdx = self.cams.keys()
+    self.surfaces = dict.fromkeys(self.camsIdx)
+    self.queues = []
 
-    self.ids=self.cameras.keys()
+    for c in self.cams.values():
+      self._make_queue(self.queues, c.listen)
+    
 
-    self.surfaces = dict.fromkeys(self.ids)
-    # self.image_queues={k:Queue() for k in self.ids}
-    self._queues = []
+  def _make_queue(self,queues, register_event):
+          q = Queue()
+          register_event(q.put)
+          queues.append(q)
 
-    def make_queue(register_event):
-        q = Queue()
-        register_event(q.put)
-        self._queues.append(q)
-
-    for c in self.cameras.values():
-        make_queue(c.listen)
-  
-  def tick(self,frame_id, timeout=2):
-    data = [self._retrieve_data(q, frame_id,timeout) for q in self._queues]
-    return data
-  
-  def _retrieve_data(self, sensor_queue,frame_id, timeout):
+  def _retrieve_data(self,sensor_queue, frame_id, timeout):
     while True:
-        data = sensor_queue.get(timeout=timeout)
-        if data.frame == frame_id:
-            return data
+      data = sensor_queue.get(timeout=timeout)
+      if data.frame == frame_id:
+        return data
 
-  def processImage(self,image):
+  def tick(self, frame_id, timeout=2):
+    data = [self._retrieve_data(q, frame_id, timeout) for q in self.queues]
+    return data
+
+  def _process_image(self, image):
     array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
     array = np.reshape(array, (image.height, image.width, 4))
     array = array[:, :, :3]
     array = array[:, :, ::-1]
     return array
 
-  def fetchImage(self,frame_id,agents_id=None):
-    rawImages=self.tick(frame_id)
-    ids=self.ids if agents_id is None else agents_id
-    for id,rawImage in zip(ids,rawImages):
-      image=self.processImage(rawImage)
-      self.surfaces[id] = pygame.surfarray.make_surface(image.swapaxes(0, 1))
+  def fetch_image(self, frame_id, agents_id=None):
+    rawImages = self.tick(frame_id)
+    idx = self.camsIdx if agents_id is None else agents_id
 
-  def RGBcamToImage(self, image,cam_id):
-  #   if self.synchronous_mode:
-  #       for id in self.ids:
-  #         image = self.image_queues[id].get(timeout=2.0)
-  #         print(image)
-  #         if image.frame == world_frame_id:
-  #           array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
-  #           array = np.reshape(array, (image.height, image.width, 4))
-  #           array = array[:, :, :3]
-  #           array = array[:, :, ::-1]
-  #           self.surfaces[id] = pygame.surfarray.make_surface(array.swapaxes(0, 1))
-            
-          
-  #   elif image is not None:
-    image.convert(cc.Raw)
-    array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
-    array = np.reshape(array, (image.height, image.width, 4))
-    array = array[:, :, :3]
-    array = array[:, :, ::-1]
-    self.surfaces[cam_id] = pygame.surfarray.make_surface(array.swapaxes(0, 1))
-      
+    for idx, rawImage in zip(idx, rawImages):
+      image = self._process_image(rawImage)
+      self.surfaces[idx] = pg.surfarray.make_surface(
+          image.swapaxes(0, 1))
