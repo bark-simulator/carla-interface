@@ -1,148 +1,178 @@
 from client.carla_client import CarlaClient
 from client.sensors import CameraManager
-from client.viewer import Viewer
+from client.viewer import CosimulationViewer
 
 from bark.world.agent import *
 from bark.models.behavior import *
 from bark.world import *
 from bark.world.map import *
-from bark.world.goal_definition import GoalDefinitionPolygon
 from bark.models.dynamic import *
 from bark.models.execution import *
 from bark.geometry import *
 from bark.geometry.standard_shapes import *
 from modules.runtime.commons.parameters import ParameterServer
 from modules.runtime.viewer.pygame_viewer import PygameViewer
-from modules.runtime.viewer.matplotlib_viewer import MPViewer
 from modules.runtime.commons.xodr_parser import XodrParser
 
 import subprocess
-import sys
 import os
 import glob
-import time
 import numpy as np
-import random
 import pygame as pg
+import time
+import logging
 
 
 BARK_PATH = "external/com_github_bark_simulator_bark/"
 BARK_MAP = "Town02"
 CARLA_MAP = "Town02"
 CARLA_PORT = 2000
-DELTA_SECOND = 0.1
+DELTA_SECOND = 0.05
 SYNCHRONOUS_MODE = True
-BARK_SCREEN_DIMS = (600, 600)
+BARK_SCREEN_DIMS = (800, 800)
 CARLA_LOW_QUALITY = False
+NUM_CAMERAS = 4
 
 
-param_server = ParameterServer(filename=BARK_PATH+"examples/params/od8_const_vel_one_agent.json")
+class Cosimulation():
+    def __init__(self):
+        self.carla_server = None
+        self.carla_client = None
 
-# World Definition
-bark_world = World(param_server)
+        self.launch_args = ["external/carla/CarlaUE4.sh", "-quality-level=Low"]
 
-# Model Definitions
-behavior_model = BehaviorConstantVelocity(param_server)
-execution_model = ExecutionModelInterpolate(param_server)
-dynamic_model = SingleTrackModel(param_server)
+        self.param_server = ParameterServer(
+            filename=BARK_PATH + "examples/params/od8_const_vel_one_agent.json")
 
-# Map Definition
-xodr_parser = XodrParser(BARK_PATH+"modules/runtime/tests/data/"+BARK_MAP+".xodr")
-map_interface = MapInterface()
-map_interface.set_open_drive_map(xodr_parser.map)
-bark_world.set_map(map_interface)
-# Agent Definition
-agent_2d_shape = CarLimousine()
+        # World Definition
+        self.bark_world = World(self.param_server)
 
-# World Simulation
-sim_step_time = param_server["simulation"]["step_time",
-                                           "Step-time in simulation",
-                                           0.05]
+        # Model Definitions
+        self.behavior_model = BehaviorConstantVelocity(self.param_server)
+        self.execution_model = ExecutionModelInterpolate(self.param_server)
+        self.dynamic_model = SingleTrackModel(self.param_server)
 
-# Open Carla simulation server
+        # Map Definition
+        xodr_parser = XodrParser(BARK_PATH + "modules/runtime/tests/data/" +
+                                 BARK_MAP + ".xodr")
+        self.map_interface = MapInterface()
+        self.map_interface.SetOpenDriveMap(xodr_parser.map)
+        self.bark_world.SetMap(self.map_interface)
+
+        # Agent Definition
+        self.agent_2d_shape = CarLimousine()
+
+        # World Simulation
+        # self.sim_step_time = self.param_server["simulation"]["step_time",
+        #                                         "Step-time in simulation",
+        #                                         0.05]
+
+        self.bark_viewer = PygameViewer(params=self.param_server,
+                                        use_world_bounds=True,
+                                        screen_dims=BARK_SCREEN_DIMS)
+
+        self.cosimulation_viewer = CosimulationViewer(
+            BARK_SCREEN_DIMS, num_cameras=NUM_CAMERAS)
+
+        self.carla_2_bark_id = dict()  # use for converting carla actor id to bark agent id
+        self.carla_cams = dict()
+
+    def close(self):
+        pg.display.quit()
+        pg.quit()
+        # kill the child of the subprocess
+        os.system("fuser {}/tcp -k".format(CARLA_PORT))
+        exit()
+
+    def launch_carla_server(self):
+        self.carla_server = subprocess.Popen(
+            self.launch_args[0] if not CARLA_LOW_QUALITY else self.launch_args)
+        time.sleep(6)  # Wait for launching carla
+
+    def connect_carla_server(self):
+        self.carla_client = CarlaClient(CARLA_MAP)
+        self.carla_client.connect(port=CARLA_PORT, timeout=10)
+        self.carla_client.set_synchronous_mode(SYNCHRONOUS_MODE, DELTA_SECOND)
+
+    def spawn_agents(self, num_agents):
+        for i in range(num_agents):
+            carla_agent_id = self.carla_client.spawn_random_vehicle(
+                num_retries=5)
+            if carla_agent_id is not None:
+                self.carla_client.set_autopilot(carla_agent_id, True)
+
+                # spawn agent object in BARK
+                agent_params = self.param_server.addChild("agent{}".format(i))
+                bark_agent = Agent(np.empty(5),
+                                   self.behavior_model,
+                                   self.dynamic_model,
+                                   self.execution_model,
+                                   self.agent_2d_shape,
+                                   agent_params,
+                                   None,  # goal_lane_id
+                                   self.map_interface)
+                self.bark_world.AddAgent(bark_agent)
+                self.carla_2_bark_id[carla_agent_id] = bark_agent.id
+
+        if len(self.carla_2_bark_id) != num_agents:
+            logging.warning("Some agents cannot be spawned due to collision in the spawning location, {} agents are spawned".format(
+                len(self.carla_2_bark_id)))
+        else:
+            logging.info("{} agents spawned sucessfully.".format(num_agents))
+
+    def create_camera_manager(self, surfaces):
+        self.cam_manager = CameraManager(
+            surfaces, synchronous_mode=SYNCHRONOUS_MODE)
+
+    def simulation_loop(self):
+        self.bark_viewer.clear()
+        self.cosimulation_viewer.tick()
+
+        if SYNCHRONOUS_MODE:
+            frame_id = self.carla_client.tick()
+            self.cam_manager.fetch_image(frame_id)
+
+        self.cosimulation_viewer.update_cameras(self.cam_manager.surfaces)
+
+        # get agents' state in carla, and fill the state into bark
+        carla_agent_states = self.carla_client.get_vehicles_state(
+            self.carla_2_bark_id)
+        self.bark_world.fillWorldFromCarla(DELTA_SECOND, carla_agent_states)
+
+        self.bark_viewer.drawWorld(self.bark_world)
+        self.cosimulation_viewer.update_bark(self.bark_viewer.screen)
+
+        self.cosimulation_viewer.show()
+
+
+sim = Cosimulation()
+
 try:
-  args = ["external/carla/CarlaUE4.sh", "-quality-level=Low"]
-  server = subprocess.Popen(args[0] if not CARLA_LOW_QUALITY else args)
-  time.sleep(6)  # Wait for carla
+    sim.launch_carla_server()
+    sim.connect_carla_server()
 
-  # Connect to Carla server
-  client = CarlaClient(CARLA_MAP)
-  client.connect(port=CARLA_PORT,timeout=10)
-  client.set_synchronous_mode(SYNCHRONOUS_MODE, DELTA_SECOND)
+    sim.spawn_agents(10)
 
-  # use for converting carla actor id to bark agent id
-  carla_to_bark_id = dict()
-  carla_cams=dict()
+    some_agent_ids = np.random.choice(
+        list(sim.carla_2_bark_id.keys()),
+        NUM_CAMERAS,
+        replace=False)
+    for agent_id in some_agent_ids:
+        cam_id = sim.carla_client.spawn_sensor(agent_id,
+                                               "sensor.camera.rgb",
+                                               location=(0, 0, 15),
+                                               rotation=(270, 0, 0))
+        sim.carla_cams[agent_id] = sim.carla_client.get_actor(cam_id)
 
-  # spawn agent (actor) in Carla
-  blueprint_library = client.get_blueprint_library()
-  for i in range(15):
-    bp = random.choice(blueprint_library.filter('vehicle'))
-    transform = random.choice(client.get_spawn_points())
-    carla_agent_id, _ = client.spawn_actor(bp, transform)
+    sim.create_camera_manager(sim.carla_cams)
 
-    if carla_agent_id == None:
-      continue
+    # main loop
+    logging.info("Start simulation")
+    while True:
+        sim.simulation_loop()
 
-    client.set_autopilot(carla_agent_id, True)
-    
-    # spawn camera on an agent
-    if i==14:
-        _, cam = client.spawn_sensor(carla_agent_id, 
-                                    "sensor.camera.rgb",
-                                    location=(0, 0, 30), 
-                                    rotation=(270, 0, 0))
-        carla_cams[carla_agent_id]=cam
-
-    # spawn agent object in BARK
-    agent_params = param_server.addChild("agent{}".format(i))
-    bark_agent = Agent(np.empty(5),
-                  behavior_model,
-                  dynamic_model,
-                  execution_model,
-                  agent_2d_shape,
-                  agent_params,
-                  None,  # goal_lane_id
-                  map_interface)
-    bark_world.add_agent(bark_agent)
-    carla_to_bark_id[carla_agent_id] = bark_agent.id
-
-  # bark viewer
-  bark_viewer = PygameViewer(params=param_server,
-                        follow_agent_id=bark_agent.id,
-                        x_range=[-100, 100],
-                        y_range=[-100, 100],
-                        screen_dims=BARK_SCREEN_DIMS)
-
-  viewer = Viewer(1, BARK_SCREEN_DIMS)
-  cam_manager = CameraManager(carla_cams,synchronous_mode=True)
-
-  # main loop
-  print("START")
-  while True:
-    bark_viewer.clear()
-    viewer.tick()
-
-    if SYNCHRONOUS_MODE:
-      frame_id=client.tick()
-      cam_manager.fetch_image(frame_id,agents_id=[carla_agent_id])
-
-    viewer.update_cameras(cam_manager.surfaces,agents_id=[carla_agent_id])
-
-    # get agents' state in carla, and fill the state into bark
-    # TODO: use time different in carla if synchronous mode is off
-    carla_agent_states = client.get_vehicles_state(carla_to_bark_id)
-    bark_world.fill_world_from_carla(DELTA_SECOND, carla_agent_states)
-
-    bark_viewer.drawWorld(bark_world,eval_agent_ids=[bark_agent.id])
-    viewer.update(bark_viewer.screen, (0, 0), BARK_SCREEN_DIMS)
-
-    viewer.flip()
-    
 except (KeyboardInterrupt, SystemExit):
-  raise
+    logging.info("Simulation canceled by user.")
+    raise
 finally:
-  pg.display.quit()
-  pg.quit()
-  os.system("fuser {}/tcp -k".format(CARLA_PORT))# kill the child of the subprocess
-  
+    sim.close()
