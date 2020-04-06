@@ -1,3 +1,5 @@
 #!/bin/bash
-virtualenv -p python3.5 ./python/venv # CARLA provides only egg file with python 2.7 and 3.5
+
+# CARLA provides only egg file with python 2.7 and 3.5 in their binary release
+virtualenv -p python3.5 ./python/venv
 source ./python/venv/bin/activate && pip install -r tools/installers/requirements.txt
