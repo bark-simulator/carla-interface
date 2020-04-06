@@ -3,6 +3,7 @@ import glob
 import math
 import numpy as np
 import logging
+import random
 
 try:
   sys.path.append(glob.glob("external/carla/PythonAPI/carla/dist/carla-*.egg")[0])
@@ -34,12 +35,16 @@ class CarlaClient():
 
     self.world = self.client.get_world()
     self.bp_lib = self.world.get_blueprint_library()
+
+    self.traffic_manager=self.client.get_trafficmanager()
+    
     logging.info("Connected to Carla Server")
 
   def set_synchronous_mode(self, mode, delta_seconds=0.05):
     self.world.apply_settings(carla.WorldSettings(
         synchronous_mode=mode,
         fixed_delta_seconds=delta_seconds))
+    self.traffic_manager.set_synchronous_mode(mode)
 
   def tick(self):
     return self.world.tick()
@@ -52,6 +57,17 @@ class CarlaClient():
 
   def get_spawn_points(self):
     return self.world.get_map().get_spawn_points()
+
+  def spawn_random_vehicle(self,num_retries=10):
+      blueprint = random.choice(self.bp_lib.filter('vehicle'))
+      
+      id=None
+      for _ in range(num_retries):
+        transform = random.choice(self.get_spawn_points())
+        id = self.spawn_actor(blueprint, transform)
+        if id is not None:
+            return id
+
 
   def spawn_actor(self, blueprint, transform):
       actor = self.world.try_spawn_actor(blueprint, transform)
@@ -74,7 +90,7 @@ class CarlaClient():
       else:
         return None
 
-  def get_actors(self, actor_id):
+  def get_actor(self, actor_id):
     return self.active_actors[actor_id]
 
   def set_autopilot(self, actor_id, mode=True):
