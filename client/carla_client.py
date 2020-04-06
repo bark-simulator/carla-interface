@@ -22,11 +22,12 @@ class CarlaClient():
     self.map = map
     self.active_actors = dict()
 
-  # def __del__(self):
-  #   if self.active_actors:
-  #     for actor in self.active_actors.values():
-  #       actor.destroy()
-  #   self.set_synchronous_mode(False)
+  def __del__(self):
+    if self.active_actors:
+      for actor in self.active_actors.values():
+        if self.world.get_actor(actor.id)!=None:
+          actor.destroy()
+    self.set_synchronous_mode(False)
 
   def connect(self, host='localhost', port=2000, timeout=2):
     self.client = carla.Client(host, port)
