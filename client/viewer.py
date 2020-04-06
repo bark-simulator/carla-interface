@@ -3,21 +3,21 @@ import math
 import logging
 
 
-class Viewer:
+class CosimulationViewer:
     def __init__(self, bark_screen_size,
                  FPS=0, num_cameras=0):
         self.bark_screen_size = bark_screen_size
         self.FPS = FPS
         self.clock = pg.time.Clock()
 
-        self.num_cameras=num_cameras
+        self.num_cameras = num_cameras
         self.cameras_window_position = []
         self.cameras_window_size = None
 
         pg.init()
 
         try:
-            if self.num_cameras!=0:
+            if self.num_cameras != 0:
                 self.screen = pg.display.set_mode((self.bark_screen_size[0] * 2,
                                                    self.bark_screen_size[1]), pg.HWSURFACE | pg.DOUBLEBUF)
 
@@ -31,7 +31,8 @@ class Viewer:
                     if i > self.num_cameras:
                         return
                     else:
-                        self.cameras_window_position.append((int(self.bark_screen_size[0] + (i % sq) * w), int(i // sq) * h))
+                        self.cameras_window_position.append(
+                            (int(self.bark_screen_size[0] + (i % sq) * w), int(i // sq) * h))
             else:
                 self.screen = pg.display.set_mode(
                     self.bark_screen_size,
@@ -46,10 +47,10 @@ class Viewer:
     def tick(self):
         self.clock.tick(self.FPS)
 
-    def update_cameras(self, surfaces_dict, agents_id=None):
-        if self.num_cameras!=0:
-            surfaces = surfaces_dict.values() if agents_id is not None else [
-                surfaces_dict[k] for k in agents_id]
+    def update_cameras(self, surfaces_dict, agents_ids=None):
+        if self.num_cameras != 0:
+            surfaces = surfaces_dict.values() if agents_ids is None else [
+                surfaces_dict[k] for k in agents_ids]
             for s, p in zip(surfaces, self.cameras_window_position):
                 if s is not None:
                     s = pg.transform.scale(s, self.windwows_size)
