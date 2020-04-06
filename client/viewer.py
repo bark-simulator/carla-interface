@@ -1,57 +1,62 @@
 import pygame as pg
 import math
+import logging
+
 
 class Viewer:
-  def __init__(self, num_camera, bark_screen_size, FPS=None):
-    self.bark_screen_size = bark_screen_size
-    self.FPS = FPS
-    self.clock = pg.time.Clock()
+    def __init__(self, bark_screen_size,
+                 FPS=0, num_cameras=0):
+        self.bark_screen_size = bark_screen_size
+        self.FPS = FPS
+        self.clock = pg.time.Clock()
 
-    pg.init()
+        self.num_cameras=num_cameras
+        self.cameras_window_position = []
+        self.cameras_window_size = None
 
-    try:
-      self.screen = pg.display.set_mode((self.bark_screen_size[0]*2,
-                                         self.bark_screen_size[1]), pg.HWSURFACE | pg.DOUBLEBUF)
-      pg.display.set_caption("Carla Interface")
+        pg.init()
 
-    except pg.error:
-      self.screen = None
-      print("No available video device")
+        try:
+            if self.num_cameras!=0:
+                self.screen = pg.display.set_mode((self.bark_screen_size[0] * 2,
+                                                   self.bark_screen_size[1]), pg.HWSURFACE | pg.DOUBLEBUF)
 
-    self.windows_position=[]
+                sq = math.ceil(math.sqrt(self.num_cameras))
+                w = self.bark_screen_size[0] / sq
+                h = self.bark_screen_size[1] / sq
+                self.windwows_size = (int(w), int(h))
 
-    sq=math.ceil(math.sqrt(num_camera))
-    w=self.bark_screen_size[0]/sq
-    h=self.bark_screen_size[1]/sq
+                i = 0
+                for i in range(sq**2):
+                    if i > self.num_cameras:
+                        return
+                    else:
+                        self.cameras_window_position.append((int(self.bark_screen_size[0] + (i % sq) * w), int(i // sq) * h))
+            else:
+                self.screen = pg.display.set_mode(
+                    self.bark_screen_size,
+                    pg.HWSURFACE | pg.DOUBLEBUF)
 
-    self.windwows_size=(int(w),int(h))
+            pg.display.set_caption("Carla Interface")
 
-    i=0
-    for i in range(sq**2):
-        if i > num_camera:
-          return
-        else:
-          self.windows_position.append((int(self.bark_screen_size[0]+(i%sq)*w),int(i//sq)*h,
-          int(self.bark_screen_size[0]+(i%sq+1)*w),int(i//sq+1)*h))
-          
+        except pg.error:
+            self.screen = None
+            logging.exception("No available video device")
 
-  def tick(self):
-    if self.FPS:
-      self.clock.tick(self.FPS)
-    else:
-      self.clock.tick()
+    def tick(self):
+        self.clock.tick(self.FPS)
 
-  def update_cameras(self, surfaces_dict,agents_id=None):
-    surfaces=surfaces_dict.values() if agents_id is None else [surfaces_dict[k] for k in agents_id]
-    for s,p in zip(surfaces,self.windows_position):
-      if s is not None:
-        s = pg.transform.scale(s, self.windwows_size)
-        self.screen.blit(s, p)
+    def update_cameras(self, surfaces_dict, agents_id=None):
+        if self.num_cameras!=0:
+            surfaces = surfaces_dict.values() if agents_id is not None else [
+                surfaces_dict[k] for k in agents_id]
+            for s, p in zip(surfaces, self.cameras_window_position):
+                if s is not None:
+                    s = pg.transform.scale(s, self.windwows_size)
+                    self.screen.blit(s, p)
 
-  def update(self, surface, position,size):
-    # surface = pg.transform.scale(surface, size)
-    self.screen.blit(surface, position)
-    # pg.display.update(position+size)
+    def update_bark(self, surface, position=(0, 0)):
+        self.screen.blit(surface, position + self.bark_screen_size)
 
-  def flip(self):
-    pg.display.flip()
+    def show(self):
+        pg.display.flip()
