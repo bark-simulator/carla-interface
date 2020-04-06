@@ -5,8 +5,8 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
   name = "com_github_bark_simulator_bark",
-  remote = "https://github.com/tin1254/bark",
-  commit = "29c826561e007a9f18ccedc21a60d034c9f27427",
+  remote = "https://github.com/bark-simulator/bark",
+  commit = "368883c4cdec8423648aebba816d8810d5912a38",
 )
 
 git_repository(
@@ -90,8 +90,8 @@ cc_library(
 
 http_archive(
   name = "carla",
-  url= "http://carla-assets-internal.s3.amazonaws.com/Releases/Linux/CARLA_0.9.6.tar.gz",
-  sha256 = "ddccb35682e8387f4f413f69d1577c1cc012e0e1474e69e20d0daf7f826a673f",
+  url= "https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/CARLA_0.9.8.tar.gz",
+#   sha256 = "ddccb35682e8387f4f413f69d1577c1cc012e0e1474e69e20d0daf7f826a673f",
   build_file_content = """
 filegroup(
     name="carla_python_lib",
