@@ -34,13 +34,17 @@ CARLA_LOW_QUALITY = False
 NUM_CAMERAS = 4
 
 
-class Cosimulation():
+class Cosimulation:
     def __init__(self):
         self.carla_server = None
         self.carla_client = None
-
+        self.carla_controller = None
+        self.bark_viewer = None
+        self.cosimulation_viewer = None
+        self.cam_manager = None
         self.launch_args = ["external/carla/CarlaUE4.sh", "-quality-level=Low"]
 
+        # Bark parameter server
         self.param_server = ParameterServer(
             filename=BARK_PATH + "examples/params/od8_const_vel_one_agent.json")
 
@@ -59,42 +63,60 @@ class Cosimulation():
         self.map_interface.SetOpenDriveMap(xodr_parser.map)
         self.bark_world.SetMap(self.map_interface)
 
-        # Agent Definition
+        # Bark agent definition
         self.agent_2d_shape = CarLimousine()
 
-        # World Simulation
-        # self.sim_step_time = self.param_server["simulation"]["step_time",
-        #                                         "Step-time in simulation",
-        #                                         0.05]
+        # use for converting carla actor id to bark agent id
+        self.carla_2_bark_id = dict()
+        # store the camera id attached to an agent
+        self.carla_agents_cam = dict()
 
+    def initialize_viewer(self):
+        # Viewer of Bark simulation, the pygame surface will be extracted
         self.bark_viewer = PygameViewer(params=self.param_server,
                                         use_world_bounds=True,
                                         screen_dims=BARK_SCREEN_DIMS)
 
+        # Viewer of cosimulation
+        # Set the number of cameras to show both simulation side by side
+        # windows from Bark simulation & camera image from Carla simulation
         self.cosimulation_viewer = CosimulationViewer(
             BARK_SCREEN_DIMS, num_cameras=NUM_CAMERAS)
-
-        self.carla_2_bark_id = dict()  # use for converting carla actor id to bark agent id
-        self.carla_cams = dict()
 
     def close(self):
         pg.display.quit()
         pg.quit()
+
         # kill the child of the subprocess
+        # sometimes the socket is not killed, blocking the launch of carla
+        # server
         os.system("fuser {}/tcp -k".format(CARLA_PORT))
         exit()
 
     def launch_carla_server(self):
         self.carla_server = subprocess.Popen(
             self.launch_args[0] if not CARLA_LOW_QUALITY else self.launch_args)
-        time.sleep(6)  # Wait for launching carla
+        # Wait for launching carla
+        time.sleep(6)
 
     def connect_carla_server(self):
-        self.carla_client = CarlaClient(CARLA_MAP)
-        self.carla_client.connect(port=CARLA_PORT, timeout=10)
+        """
+        create a carla client and try connect to carla server
+        """
+        self.carla_client = CarlaClient()
+        self.carla_client.connect(
+            carla_map=CARLA_MAP,
+            port=CARLA_PORT,
+            timeout=10)
         self.carla_client.set_synchronous_mode(SYNCHRONOUS_MODE, DELTA_SECOND)
 
-    def spawn_agents(self, num_agents):
+    def spawn_npc_agents(self, num_agents):
+        """spawn npc agents in both Carla and Bark
+
+        Arguments:
+            num_agents {int} -- number of agents to be spawned
+        """
+
         for i in range(num_agents):
             carla_agent_id = self.carla_client.spawn_random_vehicle(
                 num_retries=5)
@@ -120,7 +142,12 @@ class Cosimulation():
         else:
             logging.info("{} agents spawned sucessfully.".format(num_agents))
 
-    def create_camera_manager(self, surfaces):
+    def initialize_camera_manager(self, surfaces):
+        """create object for fetching image from carla
+
+        Arguments:
+            surfaces {list} -- list of pygame surfaces
+        """
         self.cam_manager = CameraManager(
             surfaces, synchronous_mode=SYNCHRONOUS_MODE)
 
@@ -151,8 +178,9 @@ try:
     sim.launch_carla_server()
     sim.connect_carla_server()
 
-    sim.spawn_agents(10)
+    sim.spawn_npc_agents(10)
 
+    # randomly attach camera to some agents
     some_agent_ids = np.random.choice(
         list(sim.carla_2_bark_id.keys()),
         NUM_CAMERAS,
@@ -162,17 +190,18 @@ try:
                                                "sensor.camera.rgb",
                                                location=(0, 0, 15),
                                                rotation=(270, 0, 0))
-        sim.carla_cams[agent_id] = sim.carla_client.get_actor(cam_id)
+        sim.carla_agents_cam[agent_id] = sim.carla_client.get_actor(cam_id)
 
-    sim.create_camera_manager(sim.carla_cams)
+    sim.initialize_camera_manager(sim.carla_agents_cam)
 
-    # main loop
     logging.info("Start simulation")
+    sim.initialize_viewer()
     while True:
         sim.simulation_loop()
 
 except (KeyboardInterrupt, SystemExit):
-    logging.info("Simulation canceled by user.")
-    raise
+    logging.info("Simulation canceled by user")
+except Exception as e:
+    logging.exception(str(e))
 finally:
     sim.close()
