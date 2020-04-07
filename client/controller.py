@@ -10,16 +10,12 @@ except IndexError:
 import carla
 
 
-class RawControl:
+class Controller:
   def __init__(self, client):
-    # self.control = carla.VehicleControl()
     self.client = client
 
   def control(self, vehicle, last_location, location, velocity, steer_dir):
     # TODO: use raw control instead of setting the state directly
-
-    # self.control.reverse = self.control.gear < 0
-    # vehicle.applycontrol(self.control)
     transform = carla.Transform(carla.Location(x=float(location[0]), y=-float(location[1])),
                                 carla.Rotation(yaw=math.degrees(-steer_dir)))
 
