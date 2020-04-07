@@ -37,7 +37,7 @@ class CosimulationViewer:
                 self.screen = pg.display.set_mode(
                     self.bark_screen_size,
                     pg.HWSURFACE | pg.DOUBLEBUF)
-
+                    
             pg.display.set_caption("Carla Interface")
 
         except pg.error:

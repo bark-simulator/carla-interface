@@ -13,12 +13,12 @@ py_binary(
             "@com_github_bark_simulator_bark//modules/runtime/commons:parameters",
             "@com_github_bark_simulator_bark//modules/runtime/commons:xodr_parser",
             "@com_github_bark_simulator_bark//modules/runtime/viewer:pygame_viewer",
-            "@com_github_bark_simulator_bark//modules/runtime/viewer:matplotlib_viewer",
             "//client:carla_client",
             "//client:sensors",
             "//client:viewer",
           ],
 )
+
 
 py_binary(
   name = "fill_world_with_manual_control_ego",
@@ -35,7 +35,6 @@ py_binary(
             "@com_github_bark_simulator_bark//modules/runtime/commons:parameters",
             "@com_github_bark_simulator_bark//modules/runtime/commons:xodr_parser",
             "@com_github_bark_simulator_bark//modules/runtime/viewer:pygame_viewer",
-            "@com_github_bark_simulator_bark//modules/runtime/viewer:matplotlib_viewer",
             "//client:carla_client",
             "//client:sensors",
             "//client:keyboard_control",
@@ -58,9 +57,8 @@ py_binary(
             "@com_github_bark_simulator_bark//modules/runtime/commons:parameters",
             "@com_github_bark_simulator_bark//modules/runtime/commons:xodr_parser",
             "@com_github_bark_simulator_bark//modules/runtime/viewer:pygame_viewer",
-            "@com_github_bark_simulator_bark//modules/runtime/viewer:matplotlib_viewer",
             "//client:carla_client",
-            "//client:raw_control",
+            "//client:controller",
             "//client:sensors",
             "//client:viewer"
           ],

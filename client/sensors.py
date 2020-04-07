@@ -17,8 +17,7 @@ class CameraManager:
     def __init__(self, cameras, synchronous_mode=False):
         self.synchronous_mode = synchronous_mode
         self.cams = cameras
-        self.camera_indice = cameras.keys()
-        self.surfaces = dict.fromkeys(self.camera_indice)
+        self.surfaces = dict.fromkeys(self.cams.keys())
         self.queues = []
 
         for c in self.cams.values():
@@ -48,7 +47,7 @@ class CameraManager:
 
     def fetch_image(self, frame_id, agents_id=None):
         rawImages = self.tick(frame_id)
-        idx = self.camera_indice if agents_id is None else agents_id
+        idx = self.cams.keys() if agents_id is None else agents_id
 
         for idx, rawImage in zip(idx, rawImages):
             image = self._process_image(rawImage)
