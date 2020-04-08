@@ -71,12 +71,13 @@ class CarlaClient():
     def get_spawn_points(self):
         return self.world.get_map().get_spawn_points()
 
-    def spawn_random_vehicle(self, num_retries=10):
+    def spawn_random_vehicle(self, num_retries=10, transform=None):
         blueprint = random.choice(self.bp_lib.filter('vehicle'))
 
         id = None
         for _ in range(num_retries):
-            transform = random.choice(self.get_spawn_points())
+            if transform is None:
+                transform = random.choice(self.get_spawn_points())
             id = self.spawn_actor(blueprint, transform)
             if id is not None:
                 return id

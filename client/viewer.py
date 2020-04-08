@@ -1,6 +1,7 @@
 import pygame as pg
 import math
 import logging
+import time
 
 
 class CosimulationViewer:
@@ -37,7 +38,7 @@ class CosimulationViewer:
                 self.screen = pg.display.set_mode(
                     self.bark_screen_size,
                     pg.HWSURFACE | pg.DOUBLEBUF)
-                    
+
             pg.display.set_caption("Carla Interface")
 
         except pg.error:
@@ -57,7 +58,7 @@ class CosimulationViewer:
                     self.screen.blit(s, p)
 
     def update_bark(self, surface, position=(0, 0)):
-        self.screen.blit(surface, position + self.bark_screen_size)
+        self.screen.blit(surface, position)
 
     def show(self):
         pg.display.flip()

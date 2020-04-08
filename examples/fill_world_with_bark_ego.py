@@ -181,9 +181,9 @@ class Cosimulation:
         self.bark_world.fillWorldFromCarla(DELTA_SECOND, carla_agent_states)
 
         self.bark_viewer.drawWorld(
-            self.bark_world,
+            self.bark_world, show=False,
             eval_agent_ids=[bark_ego_id])
-        self.cosimulation_viewer.update_bark(self.bark_viewer.screen)
+        self.cosimulation_viewer.update_bark(self.bark_viewer.screen_surface)
 
         self.cosimulation_viewer.show()
 
