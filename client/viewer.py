@@ -52,8 +52,6 @@ class CosimulationViewer:
     def update_cameras(self, surfaces_dict, agents_ids=None):
         if self.num_cameras != 0:
             surfaces = surfaces_dict if agents_ids is None else {k:v for k,v in surfaces_dict if k in agents_ids}
-            # [
-            #     surfaces_dict[k] for k in agents_ids]
             for (id,s), p in zip(surfaces.items(), self.cameras_window_position):
                 if s is not None:
                     s = pg.transform.scale(s, self.windwows_size)
