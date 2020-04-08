@@ -19,28 +19,6 @@ py_binary(
           ],
 )
 
-
-py_binary(
-  name = "fill_world_with_manual_control_ego",
-  srcs = ["fill_world_with_manual_control_ego.py"],
-  data = [
-            "@com_github_bark_simulator_bark//python:bark.so",
-            "@com_github_bark_simulator_bark//modules/runtime/tests:xodr_data",
-            "@com_github_bark_simulator_bark//examples:params",
-            "@carla//:carla_python_lib",
-            "@carla//:carla_server",
-          ],
-  imports = ["@com_github_bark_simulator_bark//python/"],
-  deps = [
-            "@com_github_bark_simulator_bark//modules/runtime/commons:parameters",
-            "@com_github_bark_simulator_bark//modules/runtime/commons:xodr_parser",
-            "@com_github_bark_simulator_bark//modules/runtime/viewer:pygame_viewer",
-            "//client:carla_client",
-            "//client:sensors",
-            "//client:keyboard_control",
-          ],
-)
-
 py_binary(
   name = "fill_world_with_bark_ego",
   srcs = ["fill_world_with_bark_ego.py"],
