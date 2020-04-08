@@ -63,3 +63,27 @@ py_binary(
             "//client:viewer"
           ],
 )
+
+py_binary(
+  name = "generate_opendrive_map",
+  srcs = ["generate_opendrive_map.py"],
+  data = [
+            "@com_github_bark_simulator_bark//python:bark.so",
+            "@com_github_bark_simulator_bark//modules/runtime/tests:xodr_data",
+            "@com_github_bark_simulator_bark//examples:params",
+            "@carla//:carla_python_lib",
+            "@carla//:carla_server",
+            "//python:carla-interface.so",
+            "//modules/maps:maps"
+          ],
+  imports = ["@com_github_bark_simulator_bark//python/"],
+  deps = [
+            "@com_github_bark_simulator_bark//modules/runtime/commons:parameters",
+            "@com_github_bark_simulator_bark//modules/runtime/commons:xodr_parser",
+            "@com_github_bark_simulator_bark//modules/runtime/viewer:pygame_viewer",
+            "//client:carla_client",
+            "//client:controller",
+            "//client:sensors",
+            "//client:viewer"
+          ],
+)
