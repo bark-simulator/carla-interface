@@ -4,7 +4,7 @@ from client.viewer import CosimulationViewer
 from client.controller import Controller
 
 from bark.world.agent import *
-from bark.models.behavior import *
+from bark.models.behavior import BehaviorIDMClassic
 from bark.world import *
 from bark.world.map import *
 from bark.models.dynamic import *
@@ -54,7 +54,7 @@ class Cosimulation:
         self.bark_world = World(self.param_server)
 
         # Model Definitions
-        self.behavior_model = BehaviorConstantVelocity(self.param_server)
+        self.behavior_model = BehaviorIDMClassic(self.param_server)
         self.execution_model = ExecutionModelInterpolate(self.param_server)
         self.dynamic_model = SingleTrackModel(self.param_server)
 

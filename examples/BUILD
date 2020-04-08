@@ -65,8 +65,8 @@ py_binary(
 )
 
 py_binary(
-  name = "generate_opendrive_map",
-  srcs = ["generate_opendrive_map.py"],
+  name = "simulate_on_city_highway_straight",
+  srcs = ["simulate_on_city_highway_straight.py"],
   data = [
             "@com_github_bark_simulator_bark//python:bark.so",
             "@com_github_bark_simulator_bark//modules/runtime/tests:xodr_data",
