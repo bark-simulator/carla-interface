@@ -3,18 +3,19 @@ from client.sensors import CameraManager
 from client.viewer import CosimulationViewer
 from client.controller import Controller
 
-from bark.world.agent import *
+from bark.world.agent import Agent
 from bark.models.behavior import BehaviorIDMClassic
-from bark.world import *
-from bark.world.map import *
-from bark.models.dynamic import *
-from bark.models.execution import *
-from bark.geometry import *
-from bark.geometry.standard_shapes import *
+from bark.world import World
+from bark.world.map import MapInterface
+from bark.models.dynamic import SingleTrackModel
+from bark.models.execution import ExecutionModelInterpolate
+from bark.geometry.standard_shapes import CarLimousine
+from bark.geometry import Point2d, Polygon2d
 from modules.runtime.commons.parameters import ParameterServer
 from modules.runtime.viewer.pygame_viewer import PygameViewer
 from modules.runtime.commons.xodr_parser import XodrParser
 from bark.world.goal_definition import GoalDefinitionPolygon
+
 
 import subprocess
 import os
