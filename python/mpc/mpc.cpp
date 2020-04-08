@@ -3,7 +3,7 @@
 // This work is licensed under the terms of the MIT license.
 // For a copy, see <https://opensource.org/licenses/MIT>.
 
-#include "modules/mpc/mpc.hpp"
+#include "cosimulation_modules/mpc/mpc.hpp"
 #include "mpc.hpp"
 
 namespace py = pybind11;

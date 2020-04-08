@@ -1,6 +1,6 @@
-from client.carla_client import CarlaClient
-from client.sensors import CameraManager
-from client.viewer import CosimulationViewer
+from cosimulation_modules.client.carla_client import CarlaClient
+from cosimulation_modules.client.sensors import CameraManager
+from cosimulation_modules.client.viewer import CosimulationViewer
 
 from bark.world.agent import Agent
 from bark.models.behavior import BehaviorIDMClassic

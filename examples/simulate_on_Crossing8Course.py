@@ -1,7 +1,7 @@
-from client.carla_client import CarlaClient
-from client.sensors import CameraManager
-from client.viewer import CosimulationViewer
-from client.controller import Controller
+from cosimulation_modules.client.carla_client import CarlaClient
+from cosimulation_modules.client.sensors import CameraManager
+from cosimulation_modules.client.viewer import CosimulationViewer
+from cosimulation_modules.client.controller import Controller
 
 from bark.world.agent import Agent
 from bark.models.behavior import BehaviorIDMClassic
@@ -111,12 +111,11 @@ class Cosimulation:
             port=CARLA_PORT,
             timeout=10)
 
-        with open("modules/maps/" + OPENDRIVE_MAP + ".xodr") as f:
+        with open("cosimulation_modules/maps/" + OPENDRIVE_MAP + ".xodr") as f:
             try:
                 xodr_file = f.read()
             except OSError:
                 raise ValueError("file could not be readed.")
-            print(f.read())
 
             self.carla_client.client.generate_opendrive_world(xodr_file)
 

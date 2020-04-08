@@ -13,9 +13,9 @@ py_binary(
             "@com_github_bark_simulator_bark//modules/runtime/commons:parameters",
             "@com_github_bark_simulator_bark//modules/runtime/commons:xodr_parser",
             "@com_github_bark_simulator_bark//modules/runtime/viewer:pygame_viewer",
-            "//client:carla_client",
-            "//client:sensors",
-            "//client:viewer",
+            "//cosimulation_modules/client:carla_client",
+            "//cosimulation_modules/client:sensors",
+            "//cosimulation_modules/client:viewer",
           ],
 )
 
@@ -35,10 +35,10 @@ py_binary(
             "@com_github_bark_simulator_bark//modules/runtime/commons:parameters",
             "@com_github_bark_simulator_bark//modules/runtime/commons:xodr_parser",
             "@com_github_bark_simulator_bark//modules/runtime/viewer:pygame_viewer",
-            "//client:carla_client",
-            "//client:controller",
-            "//client:sensors",
-            "//client:viewer"
+            "//cosimulation_modules/client:carla_client",
+            "//cosimulation_modules/client:controller",
+            "//cosimulation_modules/client:sensors",
+            "//cosimulation_modules/client:viewer"
           ],
 )
 
@@ -52,17 +52,17 @@ py_binary(
             "@carla//:carla_python_lib",
             "@carla//:carla_server",
             "//python:carla-interface.so",
-            "//modules/maps:maps"
+            "//cosimulation_modules/maps:maps"
           ],
   imports = ["@com_github_bark_simulator_bark//python/"],
   deps = [
             "@com_github_bark_simulator_bark//modules/runtime/commons:parameters",
             "@com_github_bark_simulator_bark//modules/runtime/commons:xodr_parser",
             "@com_github_bark_simulator_bark//modules/runtime/viewer:pygame_viewer",
-            "//client:carla_client",
-            "//client:controller",
-            "//client:sensors",
-            "//client:viewer"
+            "//cosimulation_modules/client:carla_client",
+            "//cosimulation_modules/client:controller",
+            "//cosimulation_modules/client:sensors",
+            "//cosimulation_modules/client:viewer"
           ],
 )
 
@@ -76,16 +76,16 @@ py_binary(
             "@carla//:carla_python_lib",
             "@carla//:carla_server",
             "//python:carla-interface.so",
-            "//modules/maps:maps"
+            "//cosimulation_modules/maps:maps"
           ],
   imports = ["@com_github_bark_simulator_bark//python/"],
   deps = [
             "@com_github_bark_simulator_bark//modules/runtime/commons:parameters",
             "@com_github_bark_simulator_bark//modules/runtime/commons:xodr_parser",
             "@com_github_bark_simulator_bark//modules/runtime/viewer:pygame_viewer",
-            "//client:carla_client",
-            "//client:controller",
-            "//client:sensors",
-            "//client:viewer"
+            "//cosimulation_modules/client:carla_client",
+            "//cosimulation_modules/client:controller",
+            "//cosimulation_modules/client:sensors",
+            "//cosimulation_modules/client:viewer"
           ],
 )
