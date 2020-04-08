@@ -196,6 +196,7 @@ try:
 
     logging.info("Start simulation")
     sim.initialize_viewer()
+    sim.carla_client.tick()
     while True:
         sim.simulation_loop()
 
