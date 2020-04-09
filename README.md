@@ -1,5 +1,9 @@
 # carla-interface
 
+## Screenshot
+
+![example](https://github.com/bark-simulator/carla-interface/blob/master/doc/npc_example.png)
+
 ## Requirement
 - Ubuntu 16.04 or later (recommended)
 - Nvidia driver v384.11 or later
