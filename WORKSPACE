@@ -5,8 +5,8 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
   name = "com_github_bark_simulator_bark",
-  remote = "https://github.com/tin1254/bark",
-  commit = "29c826561e007a9f18ccedc21a60d034c9f27427",
+  remote = "https://github.com/bark-simulator/bark",
+  commit = "0ab20e65aa6f328d61f7aab56e407ebdb4c7857e",
 )
 
 git_repository(
@@ -18,14 +18,6 @@ git_repository(
 load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
 boost_deps()
 
-
-http_archive(
-    name = "gtest",
-    url = "https://github.com/google/googletest/archive/release-1.7.0.zip",
-    sha256 = "b58cb7547a28b2c718d1e38aee18a3659c9e3ff52440297e965f5edffe34b6d0",
-    build_file = "@com_github_bark_simulator_bark//tools:gtest.BUILD",
-    strip_prefix = "googletest-release-1.7.0",
-)
 
 
 http_archive(
@@ -98,8 +90,8 @@ cc_library(
 
 http_archive(
   name = "carla",
-  url= "http://carla-assets-internal.s3.amazonaws.com/Releases/Linux/CARLA_0.9.6.tar.gz",
-  sha256 = "ddccb35682e8387f4f413f69d1577c1cc012e0e1474e69e20d0daf7f826a673f",
+  url= "https://carla-releases.s3.eu-west-3.amazonaws.com/Linux/CARLA_0.9.8.tar.gz",
+#   sha256 = "ddccb35682e8387f4f413f69d1577c1cc012e0e1474e69e20d0daf7f826a673f",
   build_file_content = """
 filegroup(
     name="carla_python_lib",

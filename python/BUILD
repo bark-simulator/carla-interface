@@ -9,7 +9,7 @@ cc_binary(
     "@python_linux//:python-lib",
     "@pybind11//:pybind11",
     "@com_github_eigen_eigen//:eigen", 
-    "//modules/mpc:mpc",
+    "//cosimulation_modules/mpc:mpc",
   ],
   linkshared = 1,
   linkstatic = 1

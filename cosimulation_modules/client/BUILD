@@ -17,8 +17,8 @@ py_library(
 )
 
 py_library(
-    name = "raw_control",
-    srcs = ["raw_control.py"],
+    name = "controller",
+    srcs = ["controller.py"],
     visibility = ["//visibility:public"],
 )
 

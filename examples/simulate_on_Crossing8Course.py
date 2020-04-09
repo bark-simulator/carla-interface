@@ -1,6 +1,7 @@
 from cosimulation_modules.client.carla_client import CarlaClient
 from cosimulation_modules.client.sensors import CameraManager
 from cosimulation_modules.client.viewer import CosimulationViewer
+from cosimulation_modules.client.controller import Controller
 
 from bark.world.agent import Agent
 from bark.models.behavior import BehaviorIDMClassic
@@ -15,6 +16,7 @@ from modules.runtime.viewer.pygame_viewer import PygameViewer
 from modules.runtime.commons.xodr_parser import XodrParser
 from bark.world.goal_definition import GoalDefinitionPolygon
 
+
 import subprocess
 import os
 import glob
@@ -22,17 +24,18 @@ import numpy as np
 import pygame as pg
 import time
 import logging
+import math
 
 
 BARK_PATH = "external/com_github_bark_simulator_bark/"
-BARK_MAP = "Town02"
-CARLA_MAP = "Town02"
+BARK_MAP = "Crossing8Course"
+OPENDRIVE_MAP = "Crossing8Course"
 CARLA_PORT = 2000
 DELTA_SECOND = 0.05
 SYNCHRONOUS_MODE = True
 BARK_SCREEN_DIMS = (800, 800)
 CARLA_LOW_QUALITY = False
-NUM_CAMERAS = 4
+NUM_CAMERAS = 1
 
 
 class Cosimulation:
@@ -42,7 +45,6 @@ class Cosimulation:
         self.carla_controller = None
         self.bark_viewer = None
         self.cosimulation_viewer = None
-        self.cam_manager = None
         self.launch_args = ["external/carla/CarlaUE4.sh", "-quality-level=Low"]
 
         # Bark parameter server
@@ -106,10 +108,19 @@ class Cosimulation:
         """
         self.carla_client = CarlaClient()
         self.carla_client.connect(
-            carla_map=CARLA_MAP,
             port=CARLA_PORT,
             timeout=10)
+
+        with open("cosimulation_modules/maps/" + OPENDRIVE_MAP + ".xodr") as f:
+            try:
+                xodr_file = f.read()
+            except OSError:
+                raise ValueError("file could not be readed.")
+
+            self.carla_client.client.generate_opendrive_world(xodr_file)
+
         self.carla_client.set_synchronous_mode(SYNCHRONOUS_MODE, DELTA_SECOND)
+        self.carla_controller = Controller(self.carla_client)
 
     def spawn_npc_agents(self, num_agents):
         """spawn npc agents in both Carla and Bark
@@ -117,7 +128,6 @@ class Cosimulation:
         Arguments:
             num_agents {int} -- number of agents to be spawned
         """
-
         for i in range(num_agents):
             carla_agent_id = self.carla_client.spawn_random_vehicle(
                 num_retries=5)
@@ -152,9 +162,21 @@ class Cosimulation:
         self.cam_manager = CameraManager(
             surfaces, synchronous_mode=SYNCHRONOUS_MODE)
 
-    def simulation_loop(self):
+    def simulation_loop(self, carla_ego_id):
+        bark_ego_id = self.carla_2_bark_id[carla_ego_id]
+
         self.bark_viewer.clear()
         self.cosimulation_viewer.tick()
+
+        agent_state_map = self.carla_client.get_vehicles_state(
+            self.carla_2_bark_id)
+        self.bark_world.fillWorldFromCarla(0, agent_state_map)
+
+        plan = self.bark_world.plan_agents(
+            DELTA_SECOND, [bark_ego_id])[bark_ego_id]
+
+        self.carla_controller.control(self.carla_client.get_actor(
+            carla_ego_id), plan[-2][1:3], plan[-1][1:3], plan[-1][4], plan[-1][3])
 
         if SYNCHRONOUS_MODE:
             frame_id = self.carla_client.tick()
@@ -167,7 +189,9 @@ class Cosimulation:
             self.carla_2_bark_id)
         self.bark_world.fillWorldFromCarla(DELTA_SECOND, carla_agent_states)
 
-        self.bark_viewer.drawWorld(self.bark_world,show=False)
+        self.bark_viewer.drawWorld(
+            self.bark_world, show=False,
+            eval_agent_ids=[bark_ego_id])
         self.cosimulation_viewer.update_bark(self.bark_viewer.screen_surface)
 
         self.cosimulation_viewer.show()
@@ -179,27 +203,49 @@ try:
     sim.launch_carla_server()
     sim.connect_carla_server()
 
-    sim.spawn_npc_agents(10)
+    sim.spawn_npc_agents(1)
 
-    # randomly attach camera to some agents
-    some_agent_ids = np.random.choice(
-        list(sim.carla_2_bark_id.keys()),
-        NUM_CAMERAS,
-        replace=False)
-    for agent_id in some_agent_ids:
-        cam_id = sim.carla_client.spawn_sensor(agent_id,
-                                               "sensor.camera.rgb",
-                                               location=(0, 0, 15),
-                                               rotation=(270, 0, 0))
-        sim.carla_agents_cam[agent_id] = sim.carla_client.get_actor(cam_id)
+    # [TIME_POSITION, X_POSITION, Y_POSITION, THETA_POSITION, VEL_POSITION, ...]
+    ego_initial = np.array([0, 200, 0, 0, 0])
+    goal_polygon = Polygon2d(
+        [0, 0, 0], [Point2d(-2, -2), Point2d(-2, 2), Point2d(2, 2), Point2d(2, -2)])
+    goal_polygon = goal_polygon.Translate(Point2d(0, 0))
 
+    bp_lib = sim.carla_client.get_blueprint_library()
+    bp = bp_lib.filter("vehicle.dodge_charger.police")[0]
+    tf = sim.carla_client.generate_tranformation(
+        x=ego_initial[1], y=ego_initial[2], z=0.3, pitch=0, yaw=math.degrees(ego_initial[3]), roll=0)
+
+    carla_ego_id = sim.carla_client.spawn_actor(bp, tf)
+
+    if carla_ego_id is None:
+        raise Exception("ego agent cannot be spawned")
+
+    agent_params = sim.param_server.addChild("agent 1")
+    bark_ego = Agent(ego_initial,
+                     sim.behavior_model,
+                     sim.dynamic_model,
+                     sim.execution_model,
+                     sim.agent_2d_shape,
+                     agent_params,
+                     GoalDefinitionPolygon(goal_polygon),
+                     sim.map_interface)
+    sim.bark_world.AddAgent(bark_ego)
+    sim.carla_2_bark_id[carla_ego_id] = bark_ego.id
+
+    cam_id = sim.carla_client.spawn_sensor(carla_ego_id,
+                                           "sensor.camera.rgb",
+                                           location=(0, 0, 15),
+                                           rotation=(270, 0, 0))
+    sim.carla_agents_cam[carla_ego_id] = sim.carla_client.get_actor(cam_id)
     sim.initialize_camera_manager(sim.carla_agents_cam)
 
     logging.info("Start simulation")
     sim.initialize_viewer()
+
     sim.carla_client.tick()
     while True:
-        sim.simulation_loop()
+        sim.simulation_loop(carla_ego_id)
 
 except (KeyboardInterrupt, SystemExit):
     logging.info("Simulation canceled by user")
