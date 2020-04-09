@@ -1,34 +1,50 @@
 # carla-interface
 
-### Requirement
-Linux:
+## Requirement
 - Ubuntu 16.04 or later (recommended)
-- Python 3.5
 - Nvidia driver v384.11 or later
 - OpenGL (to run with CPU only)
 - Bazel 0.25.0 or later (requires Java)
 - virtualenv
 
-### Run examples
+## Installation
+[bazel install instruction](https://docs.bazel.build/versions/master/install-ubuntu.html)
 
-Run `bazel run //examples:fill_world_with_npc` at root directory.\
-It will download Carla at the first time, it will be slow as the size of Carla is quite large.
+Install dependencies
+```python
+sudo apt-get update
+sudo apt-get install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+sudo apt-get install python3.5-dev
+sudo apt-get install python3-pip
+sudo pip3.5 install virtualenv 
+```
 
-# Run Carla out of bazel
+We then call the install script, that will install a virtual environment with all required dependencies. (Only once!)
+```python
+bash install.sh
+```
 
-Using Carla 0.9.6 (3.1GB, pre-compiled): [link](https://github.com/carla-simulator/carla/releases/tag/0.9.6)
+## Run examples
+We then go into the virtual environment (Execute every time after openning a new terminal!)
+```python
+source dev_into.sh
+```
 
-### Run Carla server
-Extract the file and run `./CarlaUE4.sh` at the Carla's root directory with a display card.\
-Run `./CarlaUE4.sh -opengl` with CPU only
+```python
+# Execute at project root directory
+# Carla will be downloaded at the first time
+bazel run //examples:fill_world_with_npc
+```
 
-### Run Carla client script
-See examples in `./PythonAPI/examples`, run the script with Python 3.5
+### Examples
+- fill_world_with_npc: spawn npc agents in Carla and Bark simultaneously, which controlled by Carla autopilot, the actions are mirrored into Bark
+- fill_world_with_bark_ego: spawn npc agents and one ego agent simultaneously, ego agent is controlled from Bark
+- simulate_on_Crossing8Course & : simulate on custom opendrive map
 
-### Setting quality level:
-Only two levels can be selected: `Low` and `Epic` (default)
+## TODO
+- Install Carla using deb installation
 
-`./CarlaUE4.sh -quality-level=Low`
-
-### Troubleshooting
-If the window crashs, try to run with `./CarlaUE4.sh -opengl`. If it can be executed successfully, then it would be the problem related to display card driver.
+## Known issue
+- Simulation crash when driving into some junction (possible bug releated to Bark)
+- Carla autopilot mode does not support custom opendrive map without junction (simulate_on_city_highway_straight)
+- Spawn agents with default spawn location on custom opendrive may lead to error
