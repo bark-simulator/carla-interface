@@ -51,12 +51,14 @@ class CosimulationViewer:
 
     def update_cameras(self, surfaces_dict, agents_ids=None):
         if self.num_cameras != 0:
-            surfaces = surfaces_dict if agents_ids is None else {k:v for k,v in surfaces_dict if k in agents_ids}
-            for (id,s), p in zip(surfaces.items(), self.cameras_window_position):
+            surfaces = surfaces_dict if agents_ids is None else {
+                k: v for k, v in surfaces_dict if k in agents_ids}
+            for (id, s), p in zip(surfaces.items(),
+                                  self.cameras_window_position):
                 if s is not None:
                     s = pg.transform.scale(s, self.windwows_size)
                     self.screen.blit(s, p)
-                    self.drawText(p, "Carla agent "+ str(id))
+                    self.drawText(p, "Carla agent " + str(id))
 
     def update_bark(self, surface, position=(0, 0)):
         self.screen.blit(surface, position)
@@ -67,8 +69,8 @@ class CosimulationViewer:
     def drawText(self, position, text):
         font = pg.font.get_default_font()
         font_size = 18
-        color = (0,255,0)
-        background_color = (255,255,255)
+        color = (255, 0, 0)
+        background_color = (255, 255, 255)
         text_surf = pg.font.SysFont(font, font_size).render(
             text, True, color, background_color)
         self.screen.blit(text_surf, position)

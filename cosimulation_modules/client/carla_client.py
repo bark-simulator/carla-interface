@@ -28,7 +28,8 @@ class CarlaClient():
             for actor in self.active_actors.values():
                 if self.world.get_actor(actor.id) is not None:
                     actor.destroy()
-        self.set_synchronous_mode(False)
+        if self.world is not None:
+            self.set_synchronous_mode(False)
 
     def connect(self, carla_map='Town02', host='localhost',
                 port=2000, timeout=2, num_retries=10):

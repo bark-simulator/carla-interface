@@ -6,7 +6,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
   name = "com_github_bark_simulator_bark",
   remote = "https://github.com/bark-simulator/bark",
-  commit = "e4e3ebbfe1448fb976cd9f8d8dcb435def11321f",
+  commit = "0ab20e65aa6f328d61f7aab56e407ebdb4c7857e",
 )
 
 git_repository(

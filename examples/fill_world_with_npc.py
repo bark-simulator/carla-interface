@@ -98,7 +98,7 @@ class Cosimulation:
         self.carla_server = subprocess.Popen(
             self.launch_args[0] if not CARLA_LOW_QUALITY else self.launch_args)
         # Wait for launching carla
-        time.sleep(6)
+        time.sleep(8)
 
     def connect_carla_server(self):
         """
