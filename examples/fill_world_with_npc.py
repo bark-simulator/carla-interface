@@ -23,10 +23,9 @@ import pygame as pg
 import time
 import logging
 
-
 BARK_PATH = "external/com_github_bark_simulator_bark/"
-BARK_MAP = "Town02"
-CARLA_MAP = "Town02"
+MAP_PATH = "external/carla/CarlaUE4/Content/Carla/Maps/OpenDrive/"
+MAP = "Town02"
 CARLA_PORT = 2000
 DELTA_SECOND = 0.05
 SYNCHRONOUS_MODE = True
@@ -58,8 +57,7 @@ class Cosimulation:
         self.dynamic_model = SingleTrackModel(self.param_server)
 
         # Map Definition
-        xodr_parser = XodrParser(BARK_PATH + "modules/runtime/tests/data/" +
-                                 BARK_MAP + ".xodr")
+        xodr_parser = XodrParser(MAP_PATH+ MAP + ".xodr")
         self.map_interface = MapInterface()
         self.map_interface.SetOpenDriveMap(xodr_parser.map)
         self.bark_world.SetMap(self.map_interface)
@@ -106,7 +104,7 @@ class Cosimulation:
         """
         self.carla_client = CarlaClient()
         self.carla_client.connect(
-            carla_map=CARLA_MAP,
+            carla_map=MAP,
             port=CARLA_PORT,
             timeout=10)
         self.carla_client.set_synchronous_mode(SYNCHRONOUS_MODE, DELTA_SECOND)

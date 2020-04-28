@@ -7,6 +7,7 @@ py_binary(
             "@com_github_bark_simulator_bark//examples:params",
             "@carla//:carla_python_lib",
             "@carla//:carla_server",
+            "@carla//:carla_maps",
           ],
   imports = ["@com_github_bark_simulator_bark//python/"],
   deps = [
@@ -28,6 +29,7 @@ py_binary(
             "@com_github_bark_simulator_bark//examples:params",
             "@carla//:carla_python_lib",
             "@carla//:carla_server",
+            "@carla//:carla_maps",
             "//python:carla-interface.so",
           ],
   imports = ["@com_github_bark_simulator_bark//python/"],

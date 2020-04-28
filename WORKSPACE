@@ -106,6 +106,11 @@ filegroup(
     srcs= ["CarlaUE4.sh"],
     visibility = ["//visibility:public"],
 )
+filegroup(
+    name="carla_maps",
+    srcs= glob(["CarlaUE4/Content/Carla/Maps/OpenDrive/*"]),
+    visibility = ["//visibility:public"],
+)
   """
 )
 

@@ -235,7 +235,7 @@ try:
 
     cam_id = sim.carla_client.spawn_sensor(carla_ego_id,
                                            "sensor.camera.rgb",
-                                           location=(0, 0, 15),
+                                           location=(0, 0, 30),
                                            rotation=(270, 0, 0))
     sim.carla_agents_cam[carla_ego_id] = sim.carla_client.get_actor(cam_id)
     sim.initialize_camera_manager(sim.carla_agents_cam)

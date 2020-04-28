@@ -26,8 +26,8 @@ import logging
 
 
 BARK_PATH = "external/com_github_bark_simulator_bark/"
-BARK_MAP = "Town01"
-CARLA_MAP = "Town01"
+MAP_PATH = "external/carla/CarlaUE4/Content/Carla/Maps/OpenDrive/"
+MAP = "Town01"
 CARLA_PORT = 2000
 DELTA_SECOND = 0.05
 SYNCHRONOUS_MODE = True
@@ -58,8 +58,7 @@ class Cosimulation:
         self.dynamic_model = SingleTrackModel(self.param_server)
 
         # Map Definition
-        xodr_parser = XodrParser(BARK_PATH + "modules/runtime/tests/data/" +
-                                 BARK_MAP + ".xodr")
+        xodr_parser = XodrParser(MAP_PATH+ MAP + ".xodr")
         self.map_interface = MapInterface()
         self.map_interface.SetOpenDriveMap(xodr_parser.map)
         self.bark_world.SetMap(self.map_interface)
@@ -106,7 +105,7 @@ class Cosimulation:
         """
         self.carla_client = CarlaClient()
         self.carla_client.connect(
-            carla_map=CARLA_MAP,
+            carla_map=MAP,
             port=CARLA_PORT,
             timeout=10)
         self.carla_client.set_synchronous_mode(SYNCHRONOUS_MODE, DELTA_SECOND)
@@ -164,7 +163,8 @@ class Cosimulation:
         self.bark_world.fillWorldFromCarla(0, agent_state_map)
 
         plan = self.bark_world.plan_agents(
-            DELTA_SECOND, [bark_ego_id])[bark_ego_id]
+            DELTA_SECOND, [bark_ego_id])
+        plan=plan[bark_ego_id]
 
         self.carla_controller.control(self.carla_client.get_actor(
             carla_ego_id), plan[-2][1:3], plan[-1][1:3], plan[-1][4], plan[-1][3])
@@ -200,7 +200,7 @@ try:
     ego_initial = np.array([0, 90, -197, 0, 0])
     goal_polygon = Polygon2d(
         [0, 0, 0], [Point2d(-1, -1), Point2d(-1, 1), Point2d(1, 1), Point2d(1, -1)])
-    goal_polygon = goal_polygon.Translate(Point2d(2, -300))
+    goal_polygon = goal_polygon.Translate(Point2d(320, -199))
 
     bp_lib = sim.carla_client.get_blueprint_library()
     bp = bp_lib.filter("vehicle.dodge_charger.police")[0]

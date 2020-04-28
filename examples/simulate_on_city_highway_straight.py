@@ -210,7 +210,7 @@ try:
     ego_initial = np.array([0, 5118, 5066, 0, 0])
     goal_polygon = Polygon2d(
         [0, 0, 0], [Point2d(-1, -1), Point2d(-1, 1), Point2d(1, 1), Point2d(1, -1)])
-    goal_polygon = goal_polygon.Translate(Point2d(5118, 5300))
+    goal_polygon = goal_polygon.Translate(Point2d(5118, 5295))
 
     bp_lib = sim.carla_client.get_blueprint_library()
     bp = bp_lib.filter("vehicle.dodge_charger.police")[0]
@@ -236,7 +236,7 @@ try:
 
     cam_id = sim.carla_client.spawn_sensor(carla_ego_id,
                                            "sensor.camera.rgb",
-                                           location=(0, 0, 15),
+                                           location=(0, 0, 30),
                                            rotation=(270, 0, 0))
     sim.carla_agents_cam[carla_ego_id] = sim.carla_client.get_actor(cam_id)
     sim.initialize_camera_manager(sim.carla_agents_cam)
