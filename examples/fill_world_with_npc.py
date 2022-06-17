@@ -24,7 +24,7 @@ import time
 import logging
 
 
-BARK_PATH = "external/com_github_bark_simulator_bark/"
+BARK_PATH = "external/bark_project/"
 BARK_MAP = "Town02"
 CARLA_MAP = "Town02"
 CARLA_PORT = 2000

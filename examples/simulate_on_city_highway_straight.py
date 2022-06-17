@@ -26,7 +26,7 @@ import logging
 import math
 
 
-BARK_PATH = "external/com_github_bark_simulator_bark/"
+BARK_PATH = "external/bark_project/"
 BARK_MAP = "city_highway_straight"
 OPENDRIVE_MAP = "city_highway_straight"
 CARLA_PORT = 2000
