@@ -3,16 +3,16 @@ workspace(name = "carla_interface")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-git_repository(
-  name = "bark_project",
-  branch = "carla_adaptation",
-  remote = "https://github.com/bark-simulator/bark",
-#   commit = "0ab20e65aa6f328d61f7aab56e407ebdb4c7857e",
-)
-# local_repository(
+# git_repository(
 #   name = "bark_project",
-#   path = "/home/xliu/fortiss_bark/bark",
+#   branch = "carla_adaptation",
+#   remote = "https://github.com/bark-simulator/bark",
+# #   commit = "0ab20e65aa6f328d61f7aab56e407ebdb4c7857e",
 # )
+local_repository(
+  name = "bark_project",
+  path = "/home/xliu/fortiss_bark/bark",
+)
 load("@bark_project//tools:deps.bzl", "bark_dependencies")
 bark_dependencies()
 

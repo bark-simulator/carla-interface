@@ -128,7 +128,7 @@ class Cosimulation:
                 # spawn agent object in BARK
                 agent_params = self.param_server.addChild("agent{}".format(i))
                 carla_agent_state = self.carla_client.get_vehicle_state(carla_agent_id)
-                print("Carla agent state:",carla_agent_state)
+                # print("Carla agent state:",carla_agent_state)
                 if carla_agent_state is None:
                     carla_agent_state = np.empty(5)
 
@@ -169,10 +169,10 @@ class Cosimulation:
 
         self.cosimulation_viewer.update_cameras(self.cam_manager.surfaces)
 
-        # # get agents' state in carla, and fill the state into bark
-        # carla_agent_states = self.carla_client.get_vehicles_state(
-        #     self.carla_2_bark_id)
-        # self.bark_world.fillWorldFromCarla(DELTA_SECOND, carla_agent_states)
+        # get agents' state in carla, and fill the state into bark
+        carla_agent_states = self.carla_client.get_vehicles_state(
+            self.carla_2_bark_id)
+        self.bark_world.UpdateAgentStateFromExtern(DELTA_SECOND, carla_agent_states)
 
         self.bark_viewer.drawWorld(self.bark_world,show=True)
         self.cosimulation_viewer.update_bark(self.bark_viewer.screen_surface)

@@ -171,7 +171,7 @@ class Cosimulation:
 
         agent_state_map = self.carla_client.get_vehicles_state(
             self.carla_2_bark_id)
-        self.bark_world.fillWorldFromCarla(0, agent_state_map)
+        self.bark_world.UpdateAgentStateFromExtern(0, agent_state_map)
 
         plan = self.bark_world.plan_agents(
             DELTA_SECOND, [bark_ego_id])[bark_ego_id]
@@ -188,7 +188,7 @@ class Cosimulation:
         # get agents' state in carla, and fill the state into bark
         carla_agent_states = self.carla_client.get_vehicles_state(
             self.carla_2_bark_id)
-        self.bark_world.fillWorldFromCarla(DELTA_SECOND, carla_agent_states)
+        self.bark_world.UpdateAgentStateFromExtern(DELTA_SECOND, carla_agent_states)
 
         self.bark_viewer.drawWorld(
             self.bark_world, show=False,
