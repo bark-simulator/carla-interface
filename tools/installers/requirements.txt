@@ -17,3 +17,4 @@ panda3d
 pandas
 autopep8
 cpplint
+carla
