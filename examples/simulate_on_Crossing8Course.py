@@ -27,7 +27,7 @@ import logging
 import math
 
 
-BARK_PATH = "external/bark_project/"
+EG_PATH = "external/bark_project/"
 BARK_MAP = "Crossing8Course"
 OPENDRIVE_MAP = "Crossing8Course"
 CARLA_PORT = 2000
@@ -49,7 +49,7 @@ class Cosimulation:
 
         # Bark parameter server
         self.param_server = ParameterServer(
-            filename=BARK_PATH + "examples/params/od8_const_vel_one_agent.json")
+            filename=EG_PATH + "examples/params/od8_const_vel_one_agent.json")
 
         # World Definition
         self.bark_world = World(self.param_server)
@@ -60,7 +60,7 @@ class Cosimulation:
         self.dynamic_model = SingleTrackModel(self.param_server)
 
         # Map Definition
-        xodr_parser = XodrParser(BARK_PATH + "modules/runtime/tests/data/" +
+        xodr_parser = XodrParser(EG_PATH + "modules/runtime/tests/data/" +
                                  BARK_MAP + ".xodr")
         self.map_interface = MapInterface()
         self.map_interface.SetOpenDriveMap(xodr_parser.map)
