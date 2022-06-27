@@ -173,6 +173,8 @@ class Cosimulation:
         self.bark_world.PlanAndExecuteAgentsWithID(
             DELTA_SECOND, [bark_ego_id])
         ego_state, ego_action = self.bark_world.agents[bark_ego_id].history[-1]
+        print("Ego State: ", ego_state)
+        print("Ego Action: ", ego_action)
         self.carla_controller.control(self.carla_client.get_actor(
             carla_ego_id), [ego_state[int(StateDefinition.X_POSITION)],ego_state[int(StateDefinition.Y_POSITION)], 0.0], ego_state[int(StateDefinition.VEL_POSITION)], ego_state[int(StateDefinition.THETA_POSITION)])
 
@@ -182,10 +184,10 @@ class Cosimulation:
 
         self.cosimulation_viewer.update_cameras(self.cam_manager.surfaces)
 
-        # get agents' state in carla, and fill the state into bark
-        carla_agent_states = self.carla_client.get_vehicles_state(
-            self.carla_2_bark_id)
-        self.bark_world.UpdateAgentStateFromExtern(DELTA_SECOND, carla_agent_states)
+        # # get agents' state in carla, and fill the state into bark
+        # carla_agent_states = self.carla_client.get_vehicles_state(
+        #     self.carla_2_bark_id)
+        # self.bark_world.UpdateAgentStateFromExtern(DELTA_SECOND, carla_agent_states)
 
         self.bark_viewer.drawWorld(
             self.bark_world, show=False,
@@ -203,10 +205,9 @@ try:
     sim_t0 = sim.spawn_npc_agents(10)
     print("Sim Time: ",sim_t0)
     sim.bark_world.time = sim_t0
-    sim.spawn_npc_agents(10)
 
     # [TIME_POSITION, X_POSITION, Y_POSITION, THETA_POSITION, VEL_POSITION, ...]
-    ego_initial = np.array([sim_t0, 90, -197, 0, 0])
+    ego_initial = np.array([sim_t0, 90, -197, 0, 2])
     goal_polygon = Polygon2d(
         [0, 0, 0], [Point2d(-1, -1), Point2d(-1, 1), Point2d(1, 1), Point2d(1, -1)])
     goal_polygon = goal_polygon.Translate(Point2d(2, -300))

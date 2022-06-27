@@ -7,6 +7,13 @@
     "simulation": {
         "step_time": 1,
         "real_time_factor": 10
+    },
+    "BehaviorIDMClassic":{
+        "DesiredVelocity": 5.0,
+        "MaxLatDifferenceToBeFront": 15.0,
+        "MaxAngleDifferenceToBeFront": 3.1,
+        "MaxLonDifferenceToBeFront": 4.0,
+        "MinimumSpacing": 8.0
     }
 }
 

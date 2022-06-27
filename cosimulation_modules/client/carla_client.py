@@ -73,6 +73,7 @@ class CarlaClient():
         return self.bp_lib
 
     def get_spawn_points(self):
+        print("Fould points to spawn actors: ", len(self.world.get_map().get_spawn_points()))
         return self.world.get_map().get_spawn_points()
 
     def spawn_random_vehicle(self, num_retries=10, transform=None):
