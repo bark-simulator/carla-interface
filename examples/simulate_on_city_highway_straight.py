@@ -210,7 +210,7 @@ try:
     sim.launch_carla_server()
     sim.connect_carla_server()
 
-    sim_t0 = sim.spawn_npc_agents(3)
+    sim_t0 = sim.spawn_npc_agents(1)
     print("Sim Time: ",sim_t0)
     sim.bark_world.time = sim_t0
     # [TIME_POSITION, X_POSITION, Y_POSITION, THETA_POSITION, VEL_POSITION, ...]

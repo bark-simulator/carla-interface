@@ -173,8 +173,8 @@ class Cosimulation:
         self.bark_world.PlanAndExecuteAgentsWithID(
             DELTA_SECOND, [bark_ego_id])
         ego_state, ego_action = self.bark_world.agents[bark_ego_id].history[-1]
-        print("Ego State: ", ego_state)
-        print("Ego Action: ", ego_action)
+        # print("Ego State: ", ego_state)
+        # print("Ego Action: ", ego_action)
         self.carla_controller.control(self.carla_client.get_actor(
             carla_ego_id), [ego_state[int(StateDefinition.X_POSITION)],ego_state[int(StateDefinition.Y_POSITION)], 0.0], ego_state[int(StateDefinition.VEL_POSITION)], ego_state[int(StateDefinition.THETA_POSITION)])
 

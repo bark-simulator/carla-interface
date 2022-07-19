@@ -76,6 +76,7 @@ py_binary(
   data = [
             "@bark_project//bark/python_wrapper:core.so",
             "@bark_project//bark/runtime/tests:xodr_data",
+            "@bark_project//bark/runtime:runtime",
             "//examples/eg_params:eg_params",
             "@carla//:carla_python_lib",
             "@carla//:carla_server",
@@ -87,6 +88,7 @@ py_binary(
             "@bark_project//bark/runtime/commons:parameters",
             "@bark_project//bark/runtime/commons:xodr_parser",
             "@bark_project//bark/runtime/viewer:pygame_viewer",
+            "@bark_project//bark/runtime:runtime",
             "//cosimulation_modules/client:carla_client",
             "//cosimulation_modules/client:controller",
             "//cosimulation_modules/client:sensors",
