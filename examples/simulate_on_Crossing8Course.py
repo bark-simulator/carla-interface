@@ -181,8 +181,8 @@ class Cosimulation:
             DELTA_SECOND, [bark_ego_id])
 
         ego_state, ego_action = self.bark_world.agents[bark_ego_id].history[-1]
-        print("Ego State: ", ego_state)
-        print("Ego Action: ", ego_action)
+        # print("Ego State: ", ego_state)
+        # print("Ego Action: ", ego_action)
         self.carla_controller.control(self.carla_client.get_actor(
             carla_ego_id), [ego_state[int(StateDefinition.X_POSITION)],ego_state[int(StateDefinition.Y_POSITION)], 0.0], ego_state[int(StateDefinition.VEL_POSITION)], ego_state[int(StateDefinition.THETA_POSITION)])
 
@@ -211,7 +211,7 @@ try:
     sim.launch_carla_server()
     sim.connect_carla_server()
 
-    sim_t0 = sim.spawn_npc_agents(1)
+    sim_t0 = sim.spawn_npc_agents(5)
     print("Sim Time: ",sim_t0)
     sim.bark_world.time = sim_t0
     # [TIME_POSITION, X_POSITION, Y_POSITION, THETA_POSITION, VEL_POSITION, ...]

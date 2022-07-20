@@ -129,11 +129,9 @@ class Cosimulation:
         Arguments:
             num_agents {int} -- number of agents to be spawned
         """
-        tf = self.carla_client.generate_tranformation(
-            x=5114, y=5300, z=0.3, yaw=90)
         for i in range(num_agents):
             carla_agent_id = self.carla_client.spawn_random_vehicle(
-                num_retries=5, transform=tf)
+                num_retries=5)# , transform=tf
             if carla_agent_id is not None:
                 self.carla_client.set_autopilot(carla_agent_id, True)
 

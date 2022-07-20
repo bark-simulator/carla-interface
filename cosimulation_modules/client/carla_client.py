@@ -24,10 +24,12 @@ class CarlaClient():
         self.active_actors = dict()
 
     def __del__(self):
-        if self.active_actors:
-            for actor in self.active_actors.values():
-                if self.world.get_actor(actor.id) is not None:
-                    actor.destroy()
+        print('destroying actors')
+        self.client.apply_batch([carla.command.DestroyActor(x) for x in self.active_actors.values()])
+        # if self.active_actors:
+        #     for actor in self.active_actors.values():
+        #         if self.world.get_actor(actor.id) is not None:
+        #             actor.destroy()
         if self.world is not None:
             self.set_synchronous_mode(False)
 
@@ -73,16 +75,26 @@ class CarlaClient():
         return self.bp_lib
 
     def get_spawn_points(self):
-        print("Fould points to spawn actors: ", len(self.world.get_map().get_spawn_points()))
-        return self.world.get_map().get_spawn_points()
+        ava_spawn_pts = self.world.get_map().get_spawn_points()
+        if not ava_spawn_pts:
+            print("Spawn Point List is empty! Generating way points")
+            waypoint_list = self.world.get_map().generate_waypoints(15.0)
+            # ava_spawn_pts = [wp.transform for wp in waypoint_list]
+            for wp in waypoint_list:
+                tmp_tf = wp.transform
+                tmp_tf.location.z += 0.3
+                ava_spawn_pts.append(tmp_tf)
+        return ava_spawn_pts
 
     def spawn_random_vehicle(self, num_retries=10, transform=None):
-        blueprint = random.choice(self.bp_lib.filter('vehicle'))
+        vehicle_bp = self.bp_lib.filter('vehicle')
+        blueprint = random.choice(vehicle_bp)
 
         id = None
+        av_spawn_pts = self.get_spawn_points()
         for _ in range(num_retries):
             if transform is None:
-                transform = random.choice(self.get_spawn_points())
+                transform = random.choice(av_spawn_pts)
             id = self.spawn_actor(blueprint, transform)
             if id is not None:
                 return id
