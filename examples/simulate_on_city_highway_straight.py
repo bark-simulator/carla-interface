@@ -24,6 +24,7 @@ import pygame as pg
 import time
 import logging
 import math
+import random
 
 
 EG_PATH = os.path.dirname(__file__)
@@ -129,9 +130,11 @@ class Cosimulation:
         Arguments:
             num_agents {int} -- number of agents to be spawned
         """
+        av_spawn_pts = self.carla_client.get_spawn_points()
         for i in range(num_agents):
+            tmp_tf = random.choice(av_spawn_pts[:len(av_spawn_pts)//2])
             carla_agent_id = self.carla_client.spawn_random_vehicle(
-                num_retries=5)# , transform=tf
+                num_retries=5, transform=tmp_tf)# , transform=tf
             if carla_agent_id is not None:
                 self.carla_client.set_autopilot(carla_agent_id, True)
 
@@ -208,7 +211,7 @@ try:
     sim.launch_carla_server()
     sim.connect_carla_server()
 
-    sim_t0 = sim.spawn_npc_agents(1)
+    sim_t0 = sim.spawn_npc_agents(3)
     print("Sim Time: ",sim_t0)
     sim.bark_world.time = sim_t0
     # [TIME_POSITION, X_POSITION, Y_POSITION, THETA_POSITION, VEL_POSITION, ...]

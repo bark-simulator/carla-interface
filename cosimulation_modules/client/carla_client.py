@@ -26,6 +26,7 @@ class CarlaClient():
     def __del__(self):
         print('destroying actors')
         self.client.apply_batch([carla.command.DestroyActor(x) for x in self.active_actors.values()])
+        self.active_actors.clear()
         # if self.active_actors:
         #     for actor in self.active_actors.values():
         #         if self.world.get_actor(actor.id) is not None:
@@ -78,7 +79,7 @@ class CarlaClient():
         ava_spawn_pts = self.world.get_map().get_spawn_points()
         if not ava_spawn_pts:
             print("Spawn Point List is empty! Generating way points")
-            waypoint_list = self.world.get_map().generate_waypoints(15.0)
+            waypoint_list = self.world.get_map().generate_waypoints(10.0)
             # ava_spawn_pts = [wp.transform for wp in waypoint_list]
             for wp in waypoint_list:
                 tmp_tf = wp.transform
@@ -91,10 +92,9 @@ class CarlaClient():
         blueprint = random.choice(vehicle_bp)
 
         id = None
-        av_spawn_pts = self.get_spawn_points()
         for _ in range(num_retries):
             if transform is None:
-                transform = random.choice(av_spawn_pts)
+                transform = random.choice(self.get_spawn_points())
             id = self.spawn_actor(blueprint, transform)
             if id is not None:
                 return id
@@ -145,16 +145,15 @@ class CarlaClient():
 
     def get_vehicle_state(self, id):
         if id in self.active_actors:
-            snapshot = self.world.get_snapshot()
             vehicle = self.active_actors[id]
-
             t = vehicle.get_transform()
             v = vehicle.get_velocity()
             # c = vehicle.get_control()
             # a = vehicle.get_acceleration()
             # av = vehicle.get_angular_velocity()
+            snapshot = self.world.get_snapshot()
             return np.array([snapshot.timestamp.elapsed_seconds, t.location.x, -t.location.y,
-                             math.radians(-t.rotation.yaw), math.sqrt(v.x**2 + v.y**2 + v.z**2)])
+                                math.radians(-t.rotation.yaw), math.sqrt(v.x**2 + v.y**2 + v.z**2)])
         else:
             logging.error("Actor {} not found".format(id))
             return None
@@ -164,10 +163,15 @@ class CarlaClient():
         # Should be called in synchronous mode
 
         actor_state_map = dict()
-        for id, vehicle in self.active_actors.items():
-            if vehicle.type_id.split(".")[0] == "vehicle":
-                actor_state_map[carla_2_bark_idx[id]
-                                ] = self.get_vehicle_state(id)
+        for id in self.active_actors.copy():
+            if self.active_actors[id].is_alive:
+                if self.active_actors[id].type_id.split(".")[0] == "vehicle":
+                    actor_state_map[carla_2_bark_idx[id]
+                                    ] = self.get_vehicle_state(id)
+            else:
+                del self.active_actors[id]
+                logging.error("Actor {} is already destroyed!".format(id))
+            
 
         return actor_state_map
 
