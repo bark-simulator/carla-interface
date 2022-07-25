@@ -65,10 +65,9 @@ class CarlaClient():
 
     def tick(self):
         return self.world.tick()
-    # def get_current_time(self):
-    #     curr_snapshot = self.world.tick()
-    #     print("Time now:",curr_snapshot.timestamp.elapsed_seconds)
-    #     return curr_snapshot.timestamp.elapsed_seconds
+    def get_current_time(self):
+        curr_snapshot =  self.world.get_snapshot()
+        return curr_snapshot.timestamp.elapsed_seconds
     def get_world(self):
         return self.world
 

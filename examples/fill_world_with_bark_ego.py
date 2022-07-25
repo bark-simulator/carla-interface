@@ -149,7 +149,6 @@ class Cosimulation:
                 len(self.carla_2_bark_id)))
         else:
             logging.info("{} agents spawned sucessfully.".format(num_agents))
-        return carla_agent_state[0]
 
     def initialize_camera_manager(self, surfaces):
         """create object for fetching image from carla
@@ -184,11 +183,6 @@ class Cosimulation:
 
         self.cosimulation_viewer.update_cameras(self.cam_manager.surfaces)
 
-        # # get agents' state in carla, and fill the state into bark
-        # carla_agent_states = self.carla_client.get_vehicles_state(
-        #     self.carla_2_bark_id)
-        # self.bark_world.UpdateAgentStateFromExtern(DELTA_SECOND, carla_agent_states)
-
         self.bark_viewer.drawWorld(
             self.bark_world, show=False,
             eval_agent_ids=[bark_ego_id])
@@ -202,12 +196,12 @@ sim = Cosimulation()
 try:
     sim.launch_carla_server()
     sim.connect_carla_server()
-    sim_t0 = sim.spawn_npc_agents(10)
-    print("Sim Time: ",sim_t0)
+    sim_t0 = sim.carla_client.get_current_time()
+    sim.spawn_npc_agents(10)
     sim.bark_world.time = sim_t0
 
     # [TIME_POSITION, X_POSITION, Y_POSITION, THETA_POSITION, VEL_POSITION, ...]
-    ego_initial = np.array([sim_t0, 90, -197, 0, 2])
+    ego_initial = np.array([sim_t0, 100, -197, 0, 2])
     goal_polygon = Polygon2d(
         [0, 0, 0], [Point2d(-1, -1), Point2d(-1, 1), Point2d(1, 1), Point2d(1, -1)])
     goal_polygon = goal_polygon.Translate(Point2d(2, -300))

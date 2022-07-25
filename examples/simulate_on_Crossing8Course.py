@@ -155,7 +155,6 @@ class Cosimulation:
                 len(self.carla_2_bark_id)))
         else:
             logging.info("{} agents spawned sucessfully.".format(num_agents))
-        return carla_agent_state[0]
 
 
     def initialize_camera_manager(self, surfaces):
@@ -181,8 +180,6 @@ class Cosimulation:
             DELTA_SECOND, [bark_ego_id])
 
         ego_state, ego_action = self.bark_world.agents[bark_ego_id].history[-1]
-        # print("Ego State: ", ego_state)
-        # print("Ego Action: ", ego_action)
         self.carla_controller.control(self.carla_client.get_actor(
             carla_ego_id), [ego_state[int(StateDefinition.X_POSITION)],ego_state[int(StateDefinition.Y_POSITION)], 0.0], ego_state[int(StateDefinition.VEL_POSITION)], ego_state[int(StateDefinition.THETA_POSITION)])
 
@@ -210,9 +207,8 @@ sim = Cosimulation()
 try:
     sim.launch_carla_server()
     sim.connect_carla_server()
-
-    sim_t0 = sim.spawn_npc_agents(5)
-    print("Sim Time: ",sim_t0)
+    sim.spawn_npc_agents(5)
+    sim_t0 = sim.carla_client.get_current_time()
     sim.bark_world.time = sim_t0
     # [TIME_POSITION, X_POSITION, Y_POSITION, THETA_POSITION, VEL_POSITION, ...]
     ego_initial = np.array([sim_t0, 200, 0, 1.5, 1.0])

@@ -9,11 +9,16 @@
         "real_time_factor": 10
     },
     "BehaviorIDMClassic":{
-        "DesiredVelocity": 5.0,
-        "MaxLatDifferenceToBeFront": 15.0,
-        "MaxAngleDifferenceToBeFront": 3.1,
-        "MaxLonDifferenceToBeFront": 4.0,
-        "MinimumSpacing": 8.0
+        "MaxVelocity": 30.0,
+        "MinimumSpacing": 5.0,
+        "DesiredTimeHeadway": 1.5,
+        "MaxAcceleration": 1.7000000476837158,
+        "AccelerationLowerBound": -15.0,
+        "AccelerationUpperBound": 8.0,
+        "DesiredVelocity": 15.0,
+        "ComfortableBrakingAcceleration": 1.6699999570846558,
+        "MinVelocity": 0.0,
+        "Exponent": 4
     }
 }
 
