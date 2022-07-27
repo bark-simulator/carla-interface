@@ -28,7 +28,7 @@ class Controller:
         vehicle.set_transform(transform)
         # velocity=10
 
-        v_x, v_y = rotate_2d_vector(0, 1, -steer_dir)
+        v_x, v_y = rotate_2d_vector(0, 1, steer_dir)
         v_x *= velocity
         v_y *= velocity
         velocity_vec = carla.Vector3D(x=v_x, y=v_y, z=0)
