@@ -167,7 +167,7 @@ class Cosimulation:
 
         agent_state_map = self.carla_client.get_vehicles_state(
             self.carla_2_bark_id)
-        self.bark_world.UpdateAgentStateFromExtern(0, agent_state_map)
+        self.bark_world.UpdateAgentStateFromExtern(0, agent_state_map, [bark_ego_id])
 
         self.bark_world.PlanAndExecuteAgentsWithID(
             DELTA_SECOND, [bark_ego_id])

@@ -172,7 +172,7 @@ class Cosimulation:
         # get agents' state in carla, and fill the state into bark
         carla_agent_states = self.carla_client.get_vehicles_state(
             self.carla_2_bark_id)
-        self.bark_world.UpdateAgentStateFromExtern(DELTA_SECOND, carla_agent_states)
+        self.bark_world.UpdateAgentStateFromExtern(DELTA_SECOND, carla_agent_states,[])
 
         self.bark_viewer.drawWorld(self.bark_world,show=True)
         self.cosimulation_viewer.update_bark(self.bark_viewer.screen_surface)
