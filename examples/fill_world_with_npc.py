@@ -2,18 +2,18 @@ from cosimulation_modules.client.carla_client import CarlaClient
 from cosimulation_modules.client.sensors import CameraManager
 from cosimulation_modules.client.viewer import CosimulationViewer
 
-from bark.world.agent import Agent
-from bark.models.behavior import BehaviorIDMClassic
-from bark.world import World
-from bark.world.map import MapInterface
-from bark.models.dynamic import SingleTrackModel
-from bark.models.execution import ExecutionModelInterpolate
-from bark.geometry.standard_shapes import CarLimousine
-from bark.geometry import Point2d, Polygon2d
-from modules.runtime.commons.parameters import ParameterServer
-from modules.runtime.viewer.pygame_viewer import PygameViewer
-from modules.runtime.commons.xodr_parser import XodrParser
-from bark.world.goal_definition import GoalDefinitionPolygon
+from bark.core.world.agent import Agent
+from bark.core.models.behavior import BehaviorIDMClassic
+from bark.core.world import World
+from bark.core.world.map import MapInterface
+from bark.core.models.dynamic import SingleTrackModel
+from bark.core.models.execution import ExecutionModelInterpolate
+from bark.core.geometry.standard_shapes import CarLimousine
+from bark.core.geometry import Point2d, Polygon2d
+from bark.runtime.commons.parameters import ParameterServer
+from bark.runtime.viewer.pygame_viewer import PygameViewer
+from bark.runtime.commons.xodr_parser import XodrParser
+from bark.core.world.goal_definition import GoalDefinitionPolygon
 
 import subprocess
 import os
@@ -24,7 +24,7 @@ import time
 import logging
 
 
-BARK_PATH = "external/com_github_bark_simulator_bark/"
+EG_PATH = os.path.dirname(__file__)
 BARK_MAP = "Town02"
 CARLA_MAP = "Town02"
 CARLA_PORT = 2000
@@ -47,7 +47,8 @@ class Cosimulation:
 
         # Bark parameter server
         self.param_server = ParameterServer(
-            filename=BARK_PATH + "examples/params/od8_const_vel_one_agent.json")
+            filename=os.path.join(EG_PATH,
+      "eg_params/od8_const_vel_one_agent.json"))
 
         # World Definition
         self.bark_world = World(self.param_server)
@@ -58,7 +59,7 @@ class Cosimulation:
         self.dynamic_model = SingleTrackModel(self.param_server)
 
         # Map Definition
-        xodr_parser = XodrParser(BARK_PATH + "modules/runtime/tests/data/" +
+        xodr_parser = XodrParser(EG_PATH + "/eg_params/" +
                                  BARK_MAP + ".xodr")
         self.map_interface = MapInterface()
         self.map_interface.SetOpenDriveMap(xodr_parser.map)
@@ -126,7 +127,12 @@ class Cosimulation:
 
                 # spawn agent object in BARK
                 agent_params = self.param_server.addChild("agent{}".format(i))
-                bark_agent = Agent(np.empty(5),
+                carla_agent_state = self.carla_client.get_vehicle_state(carla_agent_id)
+                # print("Carla agent state:",carla_agent_state)
+                if carla_agent_state is None:
+                    carla_agent_state = np.empty(5)
+
+                bark_agent = Agent(carla_agent_state,
                                    self.behavior_model,
                                    self.dynamic_model,
                                    self.execution_model,
@@ -136,6 +142,7 @@ class Cosimulation:
                                    self.map_interface)
                 self.bark_world.AddAgent(bark_agent)
                 self.carla_2_bark_id[carla_agent_id] = bark_agent.id
+
 
         if len(self.carla_2_bark_id) != num_agents:
             logging.warning("Some agents cannot be spawned due to collision in the spawning location, {} agents are spawned".format(
@@ -165,9 +172,9 @@ class Cosimulation:
         # get agents' state in carla, and fill the state into bark
         carla_agent_states = self.carla_client.get_vehicles_state(
             self.carla_2_bark_id)
-        self.bark_world.fillWorldFromCarla(DELTA_SECOND, carla_agent_states)
+        self.bark_world.UpdateAgentStateFromExtern(DELTA_SECOND, carla_agent_states,[])
 
-        self.bark_viewer.drawWorld(self.bark_world,show=False)
+        self.bark_viewer.drawWorld(self.bark_world,show=True)
         self.cosimulation_viewer.update_bark(self.bark_viewer.screen_surface)
 
         self.cosimulation_viewer.show()

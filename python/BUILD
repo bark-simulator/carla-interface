@@ -9,6 +9,7 @@ cc_binary(
     "@python_linux//:python-lib",
     "@pybind11//:pybind11",
     "@com_github_eigen_eigen//:eigen", 
+    "@boost//:geometry", # add since sometimes "boost/variant.hpp" not found
     "//cosimulation_modules/mpc:mpc",
   ],
   linkshared = 1,

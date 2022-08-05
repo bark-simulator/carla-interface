@@ -12,8 +12,9 @@ sphinx
 recommonmark
 sphinx_rtd_theme
 gym
-
+protobuf
 panda3d
 pandas
 autopep8
 cpplint
+carla

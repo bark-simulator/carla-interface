@@ -3,18 +3,18 @@ from cosimulation_modules.client.sensors import CameraManager
 from cosimulation_modules.client.viewer import CosimulationViewer
 from cosimulation_modules.client.controller import Controller
 
-from bark.world.agent import Agent
-from bark.models.behavior import BehaviorIDMClassic
-from bark.world import World
-from bark.world.map import MapInterface
-from bark.models.dynamic import SingleTrackModel
-from bark.models.execution import ExecutionModelInterpolate
-from bark.geometry.standard_shapes import CarLimousine
-from bark.geometry import Point2d, Polygon2d
-from modules.runtime.commons.parameters import ParameterServer
-from modules.runtime.viewer.pygame_viewer import PygameViewer
-from modules.runtime.commons.xodr_parser import XodrParser
-from bark.world.goal_definition import GoalDefinitionPolygon
+from bark.core.world.agent import Agent
+from bark.core.models.behavior import BehaviorIDMClassic
+from bark.core.world import World
+from bark.core.world.map import MapInterface
+from bark.core.models.dynamic import SingleTrackModel, StateDefinition
+from bark.core.models.execution import ExecutionModelInterpolate
+from bark.core.geometry.standard_shapes import CarLimousine
+from bark.core.geometry import Point2d, Polygon2d
+from bark.runtime.commons.parameters import ParameterServer
+from bark.runtime.viewer.pygame_viewer import PygameViewer
+from bark.runtime.commons.xodr_parser import XodrParser
+from bark.core.world.goal_definition import GoalDefinitionPolygon
 
 import subprocess
 import os
@@ -24,9 +24,10 @@ import pygame as pg
 import time
 import logging
 import math
+import random
 
 
-BARK_PATH = "external/com_github_bark_simulator_bark/"
+EG_PATH = os.path.dirname(__file__)
 BARK_MAP = "city_highway_straight"
 OPENDRIVE_MAP = "city_highway_straight"
 CARLA_PORT = 2000
@@ -48,7 +49,8 @@ class Cosimulation:
 
         # Bark parameter server
         self.param_server = ParameterServer(
-            filename=BARK_PATH + "examples/params/od8_const_vel_one_agent.json")
+            filename=os.path.join(EG_PATH,
+            "eg_params/od8_const_vel_one_agent.json"))
 
         # World Definition
         self.bark_world = World(self.param_server)
@@ -59,7 +61,7 @@ class Cosimulation:
         self.dynamic_model = SingleTrackModel(self.param_server)
 
         # Map Definition
-        xodr_parser = XodrParser(BARK_PATH + "modules/runtime/tests/data/" +
+        xodr_parser = XodrParser(EG_PATH + "/eg_params/" +
                                  BARK_MAP + ".xodr")
         self.map_interface = MapInterface()
         self.map_interface.SetOpenDriveMap(xodr_parser.map)
@@ -77,7 +79,8 @@ class Cosimulation:
         # Viewer of Bark simulation, the pygame surface will be extracted
         self.bark_viewer = PygameViewer(params=self.param_server,
                                         use_world_bounds=True,
-                                        screen_dims=BARK_SCREEN_DIMS)
+                                        screen_dims=BARK_SCREEN_DIMS,
+                                        screen_map_ratio = 1.5)
 
         # Viewer of cosimulation
         # Set the number of cameras to show both simulation side by side
@@ -127,17 +130,21 @@ class Cosimulation:
         Arguments:
             num_agents {int} -- number of agents to be spawned
         """
-        tf = self.carla_client.generate_tranformation(
-            x=5114, y=5300, z=0.3, yaw=90)
+        av_spawn_pts = self.carla_client.get_spawn_points()
         for i in range(num_agents):
+            tmp_tf = random.choice(av_spawn_pts[:len(av_spawn_pts)//2])
             carla_agent_id = self.carla_client.spawn_random_vehicle(
-                num_retries=5, transform=tf)
+                num_retries=5, transform=tmp_tf)# , transform=tf
             if carla_agent_id is not None:
                 self.carla_client.set_autopilot(carla_agent_id, True)
 
                 # spawn agent object in BARK
                 agent_params = self.param_server.addChild("agent{}".format(i))
-                bark_agent = Agent(np.empty(5),
+                carla_agent_state = self.carla_client.get_vehicle_state(carla_agent_id)
+                if carla_agent_state is None:
+                    carla_agent_state = np.empty(5)
+                
+                bark_agent = Agent(carla_agent_state,
                                    self.behavior_model,
                                    self.dynamic_model,
                                    self.execution_model,
@@ -171,13 +178,14 @@ class Cosimulation:
 
         agent_state_map = self.carla_client.get_vehicles_state(
             self.carla_2_bark_id)
-        self.bark_world.fillWorldFromCarla(0, agent_state_map)
+        self.bark_world.UpdateAgentStateFromExtern(DELTA_SECOND, agent_state_map, [bark_ego_id])
 
-        plan = self.bark_world.plan_agents(
-            DELTA_SECOND, [bark_ego_id])[bark_ego_id]
+        self.bark_world.PlanAndExecuteAgentsWithID(
+            DELTA_SECOND, [bark_ego_id])
 
+        ego_state, ego_action = self.bark_world.agents[bark_ego_id].history[-1]
         self.carla_controller.control(self.carla_client.get_actor(
-            carla_ego_id), plan[-2][1:3], plan[-1][1:3], plan[-1][4], plan[-1][3])
+            carla_ego_id), [ego_state[int(StateDefinition.X_POSITION)],ego_state[int(StateDefinition.Y_POSITION)], 0.0], ego_state[int(StateDefinition.VEL_POSITION)], ego_state[int(StateDefinition.THETA_POSITION)])
 
         if SYNCHRONOUS_MODE:
             frame_id = self.carla_client.tick()
@@ -185,15 +193,11 @@ class Cosimulation:
 
         self.cosimulation_viewer.update_cameras(self.cam_manager.surfaces)
 
-        # get agents' state in carla, and fill the state into bark
-        carla_agent_states = self.carla_client.get_vehicles_state(
-            self.carla_2_bark_id)
-        self.bark_world.fillWorldFromCarla(DELTA_SECOND, carla_agent_states)
-
         self.bark_viewer.drawWorld(
             self.bark_world, show=False,
             eval_agent_ids=[bark_ego_id])
         self.cosimulation_viewer.update_bark(self.bark_viewer.screen_surface)
+
 
         self.cosimulation_viewer.show()
 
@@ -204,16 +208,17 @@ try:
     sim.launch_carla_server()
     sim.connect_carla_server()
 
-    sim.spawn_npc_agents(1)
-
+    sim_t0 = sim.carla_client.get_current_time()
+    sim.spawn_npc_agents(3)
+    sim.bark_world.time = sim_t0
     # [TIME_POSITION, X_POSITION, Y_POSITION, THETA_POSITION, VEL_POSITION, ...]
-    ego_initial = np.array([0, 5118, 5066, 0, 0])
+    ego_initial = np.array([sim_t0, 5123, 5250, 0, 0])
     goal_polygon = Polygon2d(
         [0, 0, 0], [Point2d(-1, -1), Point2d(-1, 1), Point2d(1, 1), Point2d(1, -1)])
     goal_polygon = goal_polygon.Translate(Point2d(5118, 5300))
 
     bp_lib = sim.carla_client.get_blueprint_library()
-    bp = bp_lib.filter("vehicle.dodge_charger.police")[0]
+    bp = bp_lib.filter("vehicle.dodge.charger_police")[0]
     tf = sim.carla_client.generate_tranformation(
         x=ego_initial[1], y=ego_initial[2], z=0.3, pitch=0, yaw=math.degrees(ego_initial[3]), roll=0)
 
