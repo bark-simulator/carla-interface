@@ -3,16 +3,16 @@ workspace(name = "carla_interface")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
-# git_repository(
-#   name = "bark_project",
-#   branch = "carla_adaptation",
-#   remote = "https://github.com/bark-simulator/bark",
-# #   commit = "0ab20e65aa6f328d61f7aab56e407ebdb4c7857e",
-# )
-local_repository(
+git_repository(
   name = "bark_project",
-  path = "/home/xliu/fortiss_bark/bark",
+  branch = "carla_adaptation",
+  remote = "https://github.com/bark-simulator/bark",
+#   commit = "0ab20e65aa6f328d61f7aab56e407ebdb4c7857e",
 )
+# local_repository(
+#   name = "bark_project",
+#   path = "/home/xliu/fortiss_bark/bark",
+# )
 load("@bark_project//tools:deps.bzl", "bark_dependencies")
 bark_dependencies()
 
@@ -28,34 +28,6 @@ git_repository(
     remote = "https://github.com/patrickhart/rules_boost",
 )
 
-
-
-# http_archive(
-#     name = "com_google_protobuf",
-#     sha256 = "cef7f1b5a7c5fba672bec2a319246e8feba471f04dcebfe362d55930ee7c1c30",
-#     strip_prefix = "protobuf-3.5.0",
-#     urls = ["https://github.com/google/protobuf/archive/v3.5.0.zip"],
-# )
-
-# http_archive(
-#     name = "pybind11",
-#     strip_prefix = "pybind11-2.5.0",
-#     urls = ["https://github.com/pybind/pybind11/archive/v2.5.0.zip"],
-#     build_file = "@bark_project//tools/pybind11:pybind.BUILD",
-# )
-# load("@pybind11_bazel//:python_configure.bzl", "python_configure")
-# python_configure(name = "local_config_python")
-
-# External dependency: Eigen; has no Bazel build.
-# http_archive(
-#     name = "com_github_eigen_eigen",
-#     build_file = "@bark_project//tools/eigen:eigen.BUILD",
-#     sha256 = "dd254beb0bafc695d0f62ae1a222ff85b52dbaa3a16f76e781dce22d0d20a4a6",
-#     strip_prefix = "eigen-eigen-5a0156e40feb",
-#     urls = [
-#         "http://bitbucket.org/eigen/eigen/get/3.3.4.tar.bz2",
-#     ],
-# )
 
 http_archive(
     name = "com_google_ceres_solver", 
@@ -74,17 +46,6 @@ http_archive(
         "https://github.com/drigz/glog/archive/3106945d8d3322e5cbd5658d482c9ffed2d892c0.tar.gz",
     ],
 )
-
-# # External dependency: Google Flags; has Bazel build already.
-# http_archive(
-#     name = "com_github_gflags_gflags",
-#     sha256 = "6e16c8bc91b1310a44f3965e616383dbda48f83e8c1eaa2370a215057b00cabe",
-#     strip_prefix = "gflags-77592648e3f3be87d6c7123eb81cbad75f9aef5a",
-#     urls = [
-#         "https://mirror.bazel.build/github.com/gflags/gflags/archive/77592648e3f3be87d6c7123eb81cbad75f9aef5a.tar.gz",
-#         "https://github.com/gflags/gflags/archive/77592648e3f3be87d6c7123eb81cbad75f9aef5a.tar.gz",
-#     ],
-# )
 
 new_local_repository(
     name = "python_linux",
