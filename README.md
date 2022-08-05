@@ -14,7 +14,7 @@ This repository has the same environment with BARK. If you haven't yet used BARK
 
 ## Installation
 [bazel install instruction](https://docs.bazel.build/versions/master/install-ubuntu.html)\
-[Install carla latest version or (0.9.13) using deb installation](https://carla.readthedocs.io/en/latest/start_quickstart/#a-debian-carla-installation)
+[Install carla latest version or (0.9.13) using deb installation](https://carla.readthedocs.io/en/latest/start_quickstart/#a-debian-carla-installation)\
 Install dependencies
 ```python
 sudo apt-get update
